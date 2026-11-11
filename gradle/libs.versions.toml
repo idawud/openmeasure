@@ -6,8 +6,7 @@ activityCompose = "1.13.0"
 coreKtx = "1.19.1"
 junit = "4.13.2"
 arcore = "1.57.0"
-filament = "1.77.3"
-mlkitPoseDetection = "17.0.0"
+mlkitPoseDetection = "18.0.0-beta5"
 room = "2.8.5"
 ksp = "2.3.13"
 coroutines = "1.10.2"
@@ -24,9 +23,6 @@ androidx-compose-material3 = { group = "androidx.compose.material3", name = "mat
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 arcore = { group = "com.google.ar", name = "core", version.ref = "arcore" }
-filament-android = { group = "com.google.android.filament", name = "filament-android", version.ref = "filament" }
-filament-gltfio-android = { group = "com.google.android.filament", name = "gltfio-android", version.ref = "filament" }
-filament-utils-android = { group = "com.google.android.filament", name = "filament-utils-android", version.ref = "filament" }
 mlkit-pose-detection = { group = "com.google.mlkit", name = "pose-detection", version.ref = "mlkitPoseDetection" }
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }

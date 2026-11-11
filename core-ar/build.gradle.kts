@@ -22,7 +22,4 @@ dependencies {
     api(libs.kotlinx.coroutines.android)
     // Moved from :app (T25): PoseHeightService runs the detector next to the ARCore frame.
     implementation(libs.mlkit.pose.detection)
-    implementation(libs.filament.android)
-    implementation(libs.filament.gltfio.android)
-    implementation(libs.filament.utils.android)
 }

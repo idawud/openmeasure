@@ -30,6 +30,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
     buildFeatures {
         compose = true
     }
