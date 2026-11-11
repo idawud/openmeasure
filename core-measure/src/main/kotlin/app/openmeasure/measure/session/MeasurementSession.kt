@@ -65,6 +65,17 @@ class MeasurementSession(
         return p.id
     }
 
+    /** Appends several points as ONE undo step (e.g. auto-detected rectangle corners); returns their ids. */
+    @Synchronized
+    fun addPoints(positions: List<Vec3>, confidence: Float? = null): List<PointId> {
+        if (positions.isEmpty()) return emptyList()
+        val added = positions.map { Point(PointId(nextId++), it, confidence) }
+        pushHistory()
+        points = points + added
+        publish()
+        return added.map { it.id }
+    }
+
     /** Removes [id]; returns false (and records nothing) if it does not exist. */
     @Synchronized
     fun removePoint(id: PointId): Boolean {

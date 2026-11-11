@@ -24,9 +24,9 @@ import app.openmeasure.measure.units.LengthFormatter
 import app.openmeasure.measure.units.SpokenLength
 import app.openmeasure.measure.units.UnitSystem
 
-private val BadgeGreen = Color(0xFF69F0AE)
-private val BadgeYellow = Color(0xFFFFFF00)
-private val BadgeRed = Color(0xFFFF8A80)
+internal val BadgeGreen = Color(0xFF69F0AE)
+internal val BadgeYellow = Color(0xFFFFFF00)
+internal val BadgeRed = Color(0xFFFF8A80)
 
 /** Chip with the path total; call only when every segment is displayable. */
 @Composable
@@ -95,7 +95,7 @@ fun MeasureLabelView(
 }
 
 @Composable
-private fun hintText(reason: ConfidenceReason): String = stringResource(
+internal fun hintText(reason: ConfidenceReason): String = stringResource(
     when (reason) {
         ConfidenceReason.TRACKING_POOR -> R.string.hint_tracking_poor
         ConfidenceReason.NO_HIT -> R.string.hint_no_hit

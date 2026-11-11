@@ -4,20 +4,20 @@ import app.openmeasure.ar.ArCameraView
 import app.openmeasure.ar.ArHit
 import app.openmeasure.ar.ArSessionManager
 import app.openmeasure.ar.HitTestService
+import app.openmeasure.ar.RectDetectService
 import app.openmeasure.ar.SnapService
+import app.openmeasure.ar.toPose
 import app.openmeasure.measure.coaching.CoachingState
 import app.openmeasure.measure.coaching.CoachingTracker
 import app.openmeasure.measure.confidence.EndpointObservation
 import app.openmeasure.measure.confidence.TrackingStatus
+import app.openmeasure.measure.geometry.Pose
 import app.openmeasure.measure.geometry.Vec3
 import app.openmeasure.measure.hit.HitResult
-import app.openmeasure.measure.label.LabelContent
-import app.openmeasure.measure.label.MeasureLabel
+import app.openmeasure.measure.hit.HitSource
 import app.openmeasure.measure.label.PathTotal
 import app.openmeasure.measure.model.PointId
 import app.openmeasure.measure.projection.ScreenPoint
-import app.openmeasure.measure.projection.ScreenProjection
-import app.openmeasure.measure.projection.ScreenSegment
 import app.openmeasure.measure.session.MeasurementSession
 import app.openmeasure.measure.snap.SnapHysteresis
 import app.openmeasure.measure.snap.SnapKind
@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Point-to-point controller (F1/F3/F4). Runs on the GL thread via [ArCameraView.onFrame]; each placed point is
+ * Point-to-point and rectangle controller (F1/F3/F4/F9). Runs on the GL thread via [ArCameraView.onFrame]; each placed point is
  * backed by an ARCore [Anchor] whose pose is fed into [MeasurementSession.updatePoints] every frame.
  * UI-thread calls (drag, undo, remove) are queued and applied at the start of the next frame.
  */
@@ -54,6 +54,10 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
 
     private val service = HitTestService()
     private val snapService = SnapService(service.depthSource)
+    private val rectService = RectDetectService(service.depthSource)
+    private var rectMode = false
+    private val pendingDetect = AtomicBoolean(false)
+    private var detectFailTick = 0
     private var reticleSnap = newHysteresis()
     private var dragSnap = newHysteresis()
     private var hystRadius = snapRadiusPx
@@ -81,6 +85,10 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     fun reset() { pendingReset.set(true) }
     /** Finish the current path (keeps it on screen); the next point starts a new one. */
     fun done() { pendingDone.set(true) }
+    /** F9: switch between line and rectangle mode (clears the current measurement, undoable). */
+    fun setRectMode(on: Boolean) { commands += { if (rectMode != on) { rectMode = on; clearAll() } } }
+    /** F9: auto-detect a rectangle at the reticle on the next frame; failure bumps [MeasureUiState.detectFailTick]. */
+    fun detect() { pendingDetect.set(true) }
 
     /** Finger down on [id]: start dragging; [x],[y] are the (already lifted) view-pixel target. */
     fun beginDrag(id: PointId, x: Float, y: Float) {
@@ -201,6 +209,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val coaching = coachingTracker.update(System.nanoTime() / 1_000_000, status, live)
 
         if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) place(liveHit)
+        if (pendingDetect.getAndSet(false) && coaching == CoachingState.READY) detectRect(frame, w / 2f, h / 2f)
         applyDrag(frame, status)
 
         // Anchors keep points glued to the world as tracking refines (a dragged point follows the finger instead).
@@ -217,57 +226,46 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         frame.camera.getProjectionMatrix(projM, 0, NEAR, FAR)
         val camPos = frame.camera.pose.let { Vec3(it.tx(), it.ty(), it.tz()) }
         val pts = session.state.points
-        val dots = pts.map { ScreenProjection.project(it.position, viewM, projM, w, h) }
-
-        val segs = ArrayList<SegmentUi>()
-        val placed = ArrayList<LabelContent>()
-        for (i in 0 until pts.size - 1) {
-            val a = pts[i].position
-            val b = pts[i + 1].position
-            val label = MeasureLabel.build(status, observe(i, camPos), observe(i + 1, camPos), a.distanceTo(b).toDouble())
-            placed += label
-            segs += SegmentUi(ScreenProjection.projectSegment(a, b, viewM, projM, w, h), label, false)
-        }
-        if (pts.isNotEmpty() && !finished) {
-            val start = pts.last().position
-            val end = live.position
-            if (end != null) {
-                segs += SegmentUi(
-                    ScreenProjection.projectSegment(start, end, viewM, projM, w, h),
-                    MeasureLabel.build(
-                        status, observe(pts.size - 1, camPos), EndpointObservation.from(live),
-                        start.distanceTo(end).toDouble(),
-                    ),
-                    true,
-                )
-            } else {
-                segs += SegmentUi(
-                    null,
-                    MeasureLabel.build(status, observe(pts.size - 1, camPos), EndpointObservation.NONE, 0.0),
-                    true,
-                )
-            }
-        }
+        val fv = FrameView(viewM, projM, w, h, camPos, status)
+        val dots = pts.map { fv.project(it.position) }
+        val built = MeasureFrame.build(pts, finished, rectMode, live, { observe(it, camPos) }, fv)
         _state.value = MeasureUiState(
-            coaching, dots, pts.map { it.id }, segs, PathTotal.of(placed), pts.size, finished,
-            canAdd = pts.size < PathTotal.MAX_POINTS,
+            coaching, dots, pts.map { it.id }, built.segments, PathTotal.of(built.placed), pts.size, finished,
+            canAdd = rectMode || pts.size < PathTotal.MAX_POINTS,
             canUndo = session.state.canUndo,
             draggingId = draggingId,
             snapKind = if (draggingId != null) dragSnapKind else liveSnap.kind,
             snapPoint = if (draggingId != null) dragSnapPoint else liveSnap.screen,
             snapTick = snapTick,
+            rectMode = rectMode,
+            rect = built.rect,
+            detectFailTick = detectFailTick,
         )
     }
 
     private fun place(hit: ArHit) {
         val sess = manager.session ?: return
         val pos = hit.result.position ?: return
-        if (finished) clearAll()
+        if (finished || (rectMode && session.state.points.size >= MeasureFrame.RECT_CORNERS)) clearAll()
         if (session.state.points.size >= PathTotal.MAX_POINTS) return
         val anchor = hit.createAnchor(sess) ?: return
         val id = session.addPoint(pos, hit.result.confidence)
         anchors[id] = anchor
         hits[id] = hit.result
+    }
+
+    /** Replaces the measurement with detected corners (one undo step after the clear), or counts a failure. */
+    private fun detectRect(frame: Frame, x: Float, y: Float) {
+        val sess = manager.session
+        val rect = if (rectMode && sess != null) rectService.detect(frame, x, y) else null
+        if (sess == null || rect == null) { detectFailTick++; return }
+        clearAll()
+        val ids = session.addPoints(rect.corners, rect.confidence)
+        val cam = frame.camera.pose.toPose().translation
+        ids.zip(rect.corners).forEach { (id, p) ->
+            anchors[id] = sess.createAnchor(ArPose.makeTranslation(p.x, p.y, p.z))
+            hits[id] = HitResult(HitSource.DEPTH, p, Pose(p), rect.plane.normal, rect.confidence, cam.distanceTo(p))
+        }
     }
 
     /** Endpoint as seen now: original hit source/confidence, camera distance from the current camera pose. */

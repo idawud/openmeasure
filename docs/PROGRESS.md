@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T23 (edge/corner snapping, build-only). Done: T01-T06, T08-T21, T23. Open: T07, T22 (phone).
+Last committed task: T24 (rectangle+area, build-only). Done: T01-T06, T08-T21, T23, T24. Open: T07, T22 (phone).
 
 ## In progress
 - Owner chose build-only continuation. Next: wait for owner phone results (T07 -> docs/ACCURACY.md, GO/NO-GO), then T22 and tuning; Phase 2 only after GO (unverified on device).
@@ -21,7 +21,8 @@ Last committed task: T23 (edge/corner snapping, build-only). Done: T01-T06, T08-
   5. T16: photo saved in Pictures/OpenMeasure upright, no colour tint, overlay aligned, Share chooser works (API 26-28 save gated: no storage permission).
   6. T20 emulator: tablet landscape (rail, settings centred), split-screen/freeform (camera geometry), foldable posture, rotate mid-measurement, cutout.
   7. T23 snap: table edge at 1 m error (~7 mm expected), haptic once per acquire, no snap on flat noisy wall; radius 24dp may be too small for 160x120 depth.
-  8. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
+  8. T24: Detect on a book at 0.5-1.5 m vs tape (<=1 cm); flat wall -> hint; one Undo removes 4 corners; mode switch clears; area TalkBack; landscape controls not crowded.
+  9. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
   5. T17/T19/T18: tabs, gear icon, settings persist, disclaimer once; TalkBack readouts; level live region may be chatty.
 
 ## Notes that a new session must know

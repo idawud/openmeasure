@@ -5,6 +5,8 @@ import app.openmeasure.measure.label.LabelContent
 import app.openmeasure.measure.model.PointId
 import app.openmeasure.measure.projection.ScreenPoint
 import app.openmeasure.measure.projection.ScreenSegment
+import app.openmeasure.measure.rect.AreaContent
+import app.openmeasure.measure.rect.RectWarning
 import app.openmeasure.measure.snap.SnapKind
 
 /** One drawn line with its label; [live] = last placed point to the reticle. Numbers only inside Length. */
@@ -34,4 +36,13 @@ data class MeasureUiState(
     val snapPoint: ScreenPoint? = null,
     /** Increments on every snap acquire; the UI ticks haptics when it changes. */
     val snapTick: Int = 0,
+    /** F9: rectangle mode (max 4 corners, closed quad with area). */
+    val rectMode: Boolean = false,
+    /** Area label + warnings once 4 corners exist in rectangle mode. */
+    val rect: RectUi? = null,
+    /** Increments each time auto-detect finds nothing; the UI shows the manual-corners hint. */
+    val detectFailTick: Int = 0,
 )
+
+/** Rectangle overlay: [area] gated by confidence; [center] is the projected quad centre (null if behind camera). */
+data class RectUi(val area: AreaContent, val center: ScreenPoint?, val warnings: Set<RectWarning>)

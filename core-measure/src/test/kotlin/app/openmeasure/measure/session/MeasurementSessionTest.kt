@@ -170,4 +170,18 @@ class MeasurementSessionTest {
         assertEquals(3, n)
         assertEquals(7, s.state.points.size)
     }
+
+    @Test
+    fun addPointsIsOneUndoStep() {
+        val s = MeasurementSession()
+        s.addPoint(v(9f))
+        val ids = s.addPoints(listOf(v(0f), v(1f), v(1f, 1f), v(0f, 1f)), 0.8f)
+        assertEquals(4, ids.toSet().size)
+        assertEquals(5, s.state.points.size)
+        assertEquals(0.8f, s.state.points.last().confidence)
+        assertTrue(s.undo())
+        assertEquals(1, s.state.points.size)
+        assertTrue(s.addPoints(emptyList()).isEmpty())
+        assertEquals(1, s.state.points.size)
+    }
 }

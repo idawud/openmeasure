@@ -40,7 +40,7 @@ import app.openmeasure.measure.coaching.CoachingState
 import app.openmeasure.measure.snap.SnapKind
 import app.openmeasure.settings.SettingsRepository
 
-/** Camera overlay: crosshair, placed points, line, live label, "+" and reset buttons. */
+/** Camera overlay: crosshair, placed points, lines or rectangle (F9) with labels, mode bar, "+" and reset buttons. */
 @Composable
 fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRepository, cameraView: app.openmeasure.ar.ArCameraView) {
     val stateHolder = controller.state.collectAsState()
@@ -112,10 +112,12 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 ?: app.openmeasure.measure.projection.ScreenPoint(0f, 0f)
             MeasureLabelsLayer(s.segments, fallback, settings.unitSystem)
         }
+        s.rect?.let { RectAreaLabel(it, settings.unitSystem) }
         s.totalMeters?.let {
             PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
         }
+        DetectFailHint(s.detectFailTick, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp))
         if (ready || s.draggingId != null) SnapLabel(s.snapKind, s.snapPoint)
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
         // Narrow or short windows (split screen, landscape): capture moves to the top-end corner and
@@ -132,13 +134,14 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             Modifier.align(Alignment.BottomCenter).windowInsetsPadding(insets).padding(if (short) 8.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val placeDesc = stringResource(R.string.measure_place_point_desc)
+            RectModeBar(s.rectMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
+            val placeDesc = stringResource(if (s.rectMode) R.string.measure_place_corner_desc else R.string.measure_place_point_desc)
             val placeButton: @Composable () -> Unit = {
                 Button(
                     onClick = { controller.place() },
                     enabled = ready && s.canAdd,
                     modifier = Modifier.semantics { contentDescription = placeDesc },
-                ) { Text(stringResource(R.string.measure_place_point)) }
+                ) { Text(stringResource(if (s.rectMode) R.string.measure_place_corner else R.string.measure_place_point)) }
             }
             if (!short) placeButton()
             Row(horizontalArrangement = Arrangement.spacedBy(if (narrow) 6.dp else 12.dp)) {
@@ -149,7 +152,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     enabled = s.canUndo,
                     modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = undoDesc },
                 ) { Text(stringResource(R.string.measure_undo)) }
-                if (s.pointCount > 0) {
+                if (s.pointCount > 0 && !s.rectMode) {
                     // "Done" ends the current path; afterwards the same button reads "New" (next point starts fresh).
                     Button(
                         onClick = { if (s.finished) controller.reset() else controller.done() },
