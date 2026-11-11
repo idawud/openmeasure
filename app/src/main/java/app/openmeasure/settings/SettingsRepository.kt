@@ -15,6 +15,7 @@ data class AppSettings(
     val hapticsEnabled: Boolean,
     val soundEnabled: Boolean,
     val analyticsOptOut: Boolean,
+    val accuracyDisclaimerAccepted: Boolean,
 )
 
 /**
@@ -36,6 +37,8 @@ class SettingsRepository(context: Context) {
 
     fun setAnalyticsOptOut(optOut: Boolean) = save(settings.copy(analyticsOptOut = optOut))
 
+    fun acceptAccuracyDisclaimer() = save(settings.copy(accuracyDisclaimerAccepted = true))
+
     private fun load(): AppSettings = AppSettings(
         unitSystem = prefs.getString(KEY_UNITS, null)
             ?.let { name -> UnitSystem.entries.firstOrNull { it.name == name } }
@@ -43,6 +46,7 @@ class SettingsRepository(context: Context) {
         hapticsEnabled = prefs.getBoolean(KEY_HAPTICS, true),
         soundEnabled = prefs.getBoolean(KEY_SOUND, true),
         analyticsOptOut = prefs.getBoolean(KEY_ANALYTICS_OPT_OUT, false),
+        accuracyDisclaimerAccepted = prefs.getBoolean(KEY_DISCLAIMER_ACCEPTED, false),
     )
 
     private fun save(updated: AppSettings) {
@@ -51,15 +55,22 @@ class SettingsRepository(context: Context) {
             putBoolean(KEY_HAPTICS, updated.hapticsEnabled)
             putBoolean(KEY_SOUND, updated.soundEnabled)
             putBoolean(KEY_ANALYTICS_OPT_OUT, updated.analyticsOptOut)
+            putBoolean(KEY_DISCLAIMER_ACCEPTED, updated.accuracyDisclaimerAccepted)
         }
         settings = updated
     }
 
-    private companion object {
-        const val PREFS_NAME = "openmeasure_settings"
-        const val KEY_UNITS = "unit_system"
-        const val KEY_HAPTICS = "haptics_enabled"
-        const val KEY_SOUND = "sound_enabled"
-        const val KEY_ANALYTICS_OPT_OUT = "analytics_opt_out"
+    companion object {
+        private const val PREFS_NAME = "openmeasure_settings"
+        private const val KEY_UNITS = "unit_system"
+        private const val KEY_HAPTICS = "haptics_enabled"
+        private const val KEY_SOUND = "sound_enabled"
+        private const val KEY_ANALYTICS_OPT_OUT = "analytics_opt_out"
+        private const val KEY_DISCLAIMER_ACCEPTED = "accuracy_disclaimer_accepted"
+
+        /** Reads the opt-out flag without building a repository; safe to call from a crash handler. */
+        fun isAnalyticsOptedOut(context: Context): Boolean =
+            context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_ANALYTICS_OPT_OUT, false)
     }
 }

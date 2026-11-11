@@ -38,6 +38,9 @@ enum class MainTab(val labelRes: Int, val icon: ImageVector, val enabled: Boolea
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppRoot(settingsRepository: SettingsRepository) {
+    if (!settingsRepository.settings.accuracyDisclaimerAccepted) {
+        AccuracyDisclaimerDialog(onAccept = settingsRepository::acceptAccuracyDisclaimer)
+    }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     if (showSettings) {
         SettingsScreen(repository = settingsRepository, onBack = { showSettings = false })

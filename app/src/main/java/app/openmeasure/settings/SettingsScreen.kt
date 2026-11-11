@@ -106,7 +106,12 @@ private fun AboutSection() {
     Text(
         text = stringResource(R.string.about_on_device),
         style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(top = 8.dp, bottom = 24.dp),
+        modifier = Modifier.padding(top = 8.dp),
+    )
+    Text(
+        text = stringResource(R.string.about_crash_logs),
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier.padding(top = 4.dp, bottom = 24.dp),
     )
 }
 
