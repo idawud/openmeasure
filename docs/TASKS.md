@@ -6,7 +6,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 ## Phase 0 — Setup and accuracy spike
 
 - [x] T01 [haiku] Create Android project: Kotlin, Compose, modules `app`, `core-measure`, `core-ar`, `data`; compileSdk/targetSdk 37, minSdk 26; `.gitignore`; builds empty screen. (Spec §6)
-- [ ] T02 [haiku] Add dependencies: ARCore, Filament (or GL helper), CameraX not needed, ML Kit pose (on-demand), Room, Compose Material 3. Build passes.
+- [x] T02 [haiku] Add dependencies: ARCore, Filament (or GL helper), CameraX not needed, ML Kit pose (on-demand), Room, Compose Material 3. Build passes.
 - [ ] T03 [haiku] Manifest: camera permission, `com.google.ar.core` meta-data `optional`, ARCore availability check stub. Support rotation/resizing.
 - [ ] T04 [sonnet] ARCore session lifecycle in `core-ar`: install check, create/resume/pause, camera permission flow, Depth API mode when supported.
 - [ ] T05 [sonnet] Camera background rendering in Compose (GLSurfaceView or Filament view) showing live AR feed at 30 fps+.

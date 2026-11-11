@@ -2,14 +2,14 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 0
-Last committed task: T01 (project scaffold, assembleDebug passes)
+Last committed task: T02 (dependencies, assembleDebug passes)
 
 ## In progress
-- Task: T02 (deps: ARCore, Filament/GL helper, ML Kit pose, Room, Material 3) — not started
+- Task: T03 (manifest: camera permission, ARCore optional meta-data, availability stub, rotation/resizing) — not started
 - Uncommitted changes: none
 
 ## Next step
-- Start T02 with `scaffolder` (Haiku). Log a one-line reason per new dependency here.
+- Start T03 with `scaffolder` (Haiku).
 
 ## Blockers / decisions needed from the owner
 - none
@@ -19,3 +19,6 @@ Last committed task: T01 (project scaffold, assembleDebug passes)
 - Versions: Gradle 9.9.1, AGP 9.5.1, Kotlin 2.4.21, Compose BOM 2026.09.00.
 - SDK at C:/Users/idawud/AppData/Local/Android/Sdk via gitignored local.properties.
 - core-measure pins Kotlin jvmTarget 17 (Kotlin defaulted to 25, mismatching Java).
+- Dependencies (reasons): ARCore 1.57.0 (AR session/tracking); Filament 1.77.3 in core-ar (rendering);
+  ML Kit pose-detection 17.0.0 (person height; accurate variant is separate artifact);
+  Room 2.8.5 + KSP 2.3.13 in data (history DB; KSP has no 2.4.x, works with Kotlin 2.4.21).
