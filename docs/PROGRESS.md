@@ -2,39 +2,33 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T26 (history, Room v1; build-only). Done: T01-T06, T08-T21, T23-T26. Open: T07, T22 (phone). Lint/release gaps in docs/RELEASE_CHECKLIST.md.
+Last committed task: T27 (guide lines). Done: T01-T06, T08-T21, T23-T27. Open: T07, T22 (need phone).
+Everything since T05 is compiled + JVM-tested only, never run on a device.
 
-## In progress
-- Owner chose build-only continuation. Next: wait for owner phone results (T07 -> docs/ACCURACY.md, GO/NO-GO), then T22 and tuning; Phase 2 only after GO (unverified on device).
-- T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. NO-GO = stop and ask owner.
+## Next step
+- Next unticked after T27: see docs/TASKS.md. Phone results (below) gate T07 GO/NO-GO and T22; NO-GO = stop and ask.
 
 ## Blockers / decisions needed from the owner
-- MANUAL TEST (Pixel 8 Pro, Android 17): `./gradlew installDebug`, then:
-  1. T05 camera: feed shows after permission, not stretched/flipped; rotate 0/90/180/270 + split-screen OK;
-     Home then return = no black screen/crash; smooth ~30 fps.
-  2. T07 accuracy (spike screen replaced by T11 UI): 3 known-length objects (A4 29.7 cm, ~1 m ruler, ~2 m door height).
-     Press "+" for A then "+" again for B (further presses add segments; log line per segment), 5 readings each. Label shows number only if confidence allows. `adb logcat -s OpenMeasureSpike` gives "dist=.. cm source=.. conf=..".
-     Send per object: true length, 5 readings, source (DEPTH/PLANE), oddities. Target ~1 cm short / 1-2% long (SPEC).
-  3. T15 level: Level tab; phone flat shows bubble, on its side shows bar; green <0.5 deg; check with a known-level
-     surface; tone/haptic follow Settings toggles; rotate = brief reset only.
-  4. T13: drag endpoint (56dp above finger), long-press removes, Undo restores, no jump when tracking lost.
-  5. T16: photo saved in Pictures/OpenMeasure upright, no colour tint, overlay aligned, Share chooser works (API 26-28 save gated: no storage permission).
-  6. T20 emulator: tablet landscape (rail, settings centred), split-screen/freeform (camera geometry), foldable posture, rotate mid-measurement, cutout.
-  7. T23 snap: table edge at 1 m error (~7 mm expected), haptic once per acquire, no snap on flat noisy wall; radius 24dp may be too small for 160x120 depth.
-  8. T24: Detect on a book at 0.5-1.5 m vs tape (<=1 cm); flat wall -> hint; one Undo removes 4 corners; mode switch clears; area TalkBack; landscape controls not crowded.
-  9. T25 height: skeleton aligns portrait+landscape; stable readout (spread <1 cm may never occur: raise stableSpreadM); tape check at 2/3/4 m (expect +-1.5 cm); AR session now shared in AppRoot, paused on tab leave: verify Measure<->Level<->Height switching and resume.
-  10. T26 history: Save line/rect/height -> History row+thumbnail; unit switch re-formats; note edit, delete+Undo, Clear all; photo deleted -> icon fallback.
-  11. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
-  5. T17/T19/T18: tabs, gear icon, settings persist, disclaimer once; TalkBack readouts; level live region may be chatty.
+- No device connected (adb devices empty). Connect Pixel 8 Pro (USB debugging), then `./gradlew installDebug`.
+- MANUAL TESTS (Pixel 8 Pro, Android 17), in priority order:
+  1. T05/T11 camera+measure: feed ok after permission, rotate/split-screen ok, Home+return no crash, ~30 fps;
+     dots/line track surface; labels legible; haptic on B; AR session shared in AppRoot, paused on tab leave:
+     verify Measure<->Level<->Height switching + resume.
+  2. T07 accuracy: 3 known-length objects (A4 29.7 cm, ~1 m ruler, ~2 m door). "+" for A, "+" for B, 5 readings each.
+     `adb logcat -s OpenMeasureSpike` logs "dist=.. cm source=.. conf=..". Send true length, readings, source, oddities.
+  3. T15 level (flat bubble / edge bar, green <0.5 deg, tone+haptic follow toggles). T17-T19 tabs, settings, disclaimer once, TalkBack.
+  4. T16 capture: saved photo upright, no tint, overlay aligned, Share works (API 26-28 save gated).
+  5. T20 emulator: tablet rail, split-screen, foldable posture, rotate mid-measure, cutout.
+  6. T23 snap: table edge at 1 m (~7 mm expected), one haptic per acquire, no snap on flat wall, 24dp radius maybe too small.
+  7. T24 rect: book at 0.5-1.5 m vs tape; flat wall -> hint; one Undo removes 4 corners.
+  8. T25 height: skeleton aligned; stable readout (stableSpreadM may need raising); tape check 2/3/4 m (+-1.5 cm).
+  9. T26 history: save line/rect/height, unit switch re-formats, note edit, delete+Undo, clear all.
+  10. T27 guides: Level/Plumb chip, lock at 2 deg (release 4), placed point exactly level/plumb, chip not overlapping.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
-- Versions: Gradle 9.9.1, AGP 9.5.1, Kotlin 2.4.21, Compose BOM 2026.09.00. core-measure pins Kotlin jvmTarget 17.
-- Deps (reasons): ARCore 1.57.0 (api in core-ar); Filament 1.77.3 (core-ar, unused so far); ML Kit pose-detection
-  17.0.0 (person height); Room 2.8.5 + KSP 2.3.13 (data); kotlinx-coroutines-android 1.10.2 (StateFlow in core-ar).
-- core-measure: geometry/, hit/ (DepthHitTester, HitResolver), model/Path, session/MeasurementSession (wire: listener->
-  StateFlow, endMove(), updatePoints per frame), confidence/ConfidenceScorer (hide number when !canDisplayNumber),
-  units/LengthFormatter, level/LevelMath. core-ar: HitTestService, ArCameraView (onFrame on GL thread).
-- Tunables guessed, need phone tuning: hit-test weights, PLANE_HIGH_MIN_CONFIDENCE (0.9).
-- Spike points are plain Vec3 (no anchors). Settings haptics/sound wired only in Level; analytics opt-out also
-  gates local-only crash logs (filesDir/crashes). Hand-drawn icons: eyeball on device.
+- Versions: Gradle 9.9.1, AGP 9.5.1, Kotlin 2.4.21, Compose BOM 2026.09.00; core-measure pins jvmTarget 17.
+- Deps (reasons): ARCore 1.57.0; Filament 1.77.3 (core-ar, unused); ML Kit pose-detection 17.0.0 (core-ar; height);
+  Room 2.8.5 + KSP 2.3.13 (data); kotlinx-coroutines-android 1.10.2 (StateFlow). No other deps.
+- Hit-test/confidence tunables are guesses (PLANE_HIGH_MIN_CONFIDENCE 0.9, snap thresholds): tune after T07/T22.
+- Crash logs local-only (filesDir/crashes), gated by analytics opt-out. Lint leftovers in docs/RELEASE_CHECKLIST.md.

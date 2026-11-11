@@ -49,6 +49,8 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
 
     /** Settings "Snap to edges"; read on the GL thread every frame. */
     @Volatile var snapEnabled: Boolean = true
+    /** Settings "Guide lines" (F12): references + lock to level/plumb while placing the next point in line mode. */
+    @Volatile var guideEnabled: Boolean = true
     /** Max snap distance in view pixels (set from dp by the UI). Snapped points never move farther. */
     @Volatile var snapRadiusPx: Float = 60f
 
@@ -65,6 +67,8 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private var dragSnapPoint: ScreenPoint? = null
     private var snapTick = 0
 
+    private val guide = GuideController()
+    private var lockedEnd: Vec3? = null
     private val coachingTracker = CoachingTracker()
     private val session = MeasurementSession()
     private var finished = false
@@ -205,10 +209,19 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         }
         val liveSnap = snapped(frame, w / 2f, h / 2f, service.hitTestCenter(frame, view.width, view.height), reticleSnap)
         val liveHit: ArHit = liveSnap.hit
-        val live = liveHit.result
+        var live = liveHit.result
+        frame.camera.getViewMatrix(viewM, 0)
+        frame.camera.getProjectionMatrix(projM, 0, NEAR, FAR)
+        val camPos = frame.camera.pose.let { Vec3(it.tx(), it.ty(), it.tz()) }
+        val fv = FrameView(viewM, projM, w, h, camPos, status)
+        // F12: when aligned, the live end becomes its level/plumb projection so lengths are the true horizontal/vertical distance.
+        val start = if (rectMode || finished) null else session.state.points.lastOrNull()?.position
+        val g = guide.update(start, live.position, guideEnabled && status == TrackingStatus.TRACKING, fv)
+        lockedEnd = if (g != null && g.locked) g.end else null
+        lockedEnd?.let { live = live.copy(position = it) }
         val coaching = coachingTracker.update(System.nanoTime() / 1_000_000, status, live)
 
-        if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) place(liveHit)
+        if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) place(liveHit, lockedEnd)
         if (pendingDetect.getAndSet(false) && coaching == CoachingState.READY) detectRect(frame, w / 2f, h / 2f)
         applyDrag(frame, status)
 
@@ -222,11 +235,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         }
         if (updates.isNotEmpty()) session.updatePoints(updates)
 
-        frame.camera.getViewMatrix(viewM, 0)
-        frame.camera.getProjectionMatrix(projM, 0, NEAR, FAR)
-        val camPos = frame.camera.pose.let { Vec3(it.tx(), it.ty(), it.tz()) }
         val pts = session.state.points
-        val fv = FrameView(viewM, projM, w, h, camPos, status)
         val dots = pts.map { fv.project(it.position) }
         val built = MeasureFrame.build(pts, finished, rectMode, live, { observe(it, camPos) }, fv)
         _state.value = MeasureUiState(
@@ -237,6 +246,8 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             snapKind = if (draggingId != null) dragSnapKind else liveSnap.kind,
             snapPoint = if (draggingId != null) dragSnapPoint else liveSnap.screen,
             snapTick = snapTick,
+            guide = g?.ui,
+            guideTick = guide.acquireTick,
             rectMode = rectMode,
             rect = built.rect,
             detectFailTick = detectFailTick,
@@ -244,12 +255,13 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         )
     }
 
-    private fun place(hit: ArHit) {
+    private fun place(hit: ArHit, aligned: Vec3? = null) {
         val sess = manager.session ?: return
-        val pos = hit.result.position ?: return
+        val pos = aligned ?: hit.result.position ?: return
         if (finished || (rectMode && session.state.points.size >= MeasureFrame.RECT_CORNERS)) clearAll()
         if (session.state.points.size >= PathTotal.MAX_POINTS) return
-        val anchor = hit.createAnchor(sess) ?: return
+        val anchor = (if (aligned != null) sess.createAnchor(ArPose.makeTranslation(pos.x, pos.y, pos.z)) else hit.createAnchor(sess))
+            ?: return
         val id = session.addPoint(pos, hit.result.confidence)
         anchors[id] = anchor
         hits[id] = hit.result

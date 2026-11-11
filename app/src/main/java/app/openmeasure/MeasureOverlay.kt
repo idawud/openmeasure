@@ -60,10 +60,14 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     val snapRadiusPx = with(LocalDensity.current) { SNAP_RADIUS.toPx() }
     SideEffect {
         controller.snapEnabled = settings.snapEnabled
+        controller.guideEnabled = settings.guideEnabled
         controller.snapRadiusPx = snapRadiusPx
     }
     LaunchedEffect(s.snapTick) {
         if (s.snapTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+    }
+    LaunchedEffect(s.guideTick) {
+        if (s.guideTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     val snackbar = remember { SnackbarHostState() }
@@ -80,6 +84,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             },
         ) {
             val line = Color(0xFFFFEB3B)
+            s.guide?.let { drawGuides(it) }
             s.segments.forEach { su ->
                 val it = su.segment ?: return@forEach
                 drawLine(
@@ -123,6 +128,9 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 72.dp))
         DetectFailHint(s.detectFailTick, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp))
+        s.guide?.takeIf { ready }?.let {
+            GuideChip(it.state, Modifier.align(Alignment.Center).padding(top = 72.dp))
+        }
         if (ready || s.draggingId != null) SnapLabel(s.snapKind, s.snapPoint)
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
         // Narrow or short windows (split screen, landscape): capture moves to the top-end corner and

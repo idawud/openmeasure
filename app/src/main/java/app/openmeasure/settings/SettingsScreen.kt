@@ -77,6 +77,12 @@ fun SettingsScreen(repository: SettingsRepository, onBack: () -> Unit) {
                 checked = settings.snapEnabled,
                 onCheckedChange = repository::setSnapEnabled,
             )
+            ToggleRow(
+                title = stringResource(R.string.settings_guide),
+                description = stringResource(R.string.settings_guide_desc),
+                checked = settings.guideEnabled,
+                onCheckedChange = repository::setGuideEnabled,
+            )
 
             SectionHeader(stringResource(R.string.settings_feedback))
             ToggleRow(

@@ -17,6 +17,7 @@ data class AppSettings(
     val analyticsOptOut: Boolean,
     val accuracyDisclaimerAccepted: Boolean,
     val snapEnabled: Boolean = true,
+    val guideEnabled: Boolean = true,
 )
 
 /**
@@ -40,6 +41,8 @@ class SettingsRepository(context: Context) {
 
     fun setSnapEnabled(enabled: Boolean) = save(settings.copy(snapEnabled = enabled))
 
+    fun setGuideEnabled(enabled: Boolean) = save(settings.copy(guideEnabled = enabled))
+
     fun acceptAccuracyDisclaimer() = save(settings.copy(accuracyDisclaimerAccepted = true))
 
     private fun load(): AppSettings = AppSettings(
@@ -51,6 +54,7 @@ class SettingsRepository(context: Context) {
         analyticsOptOut = prefs.getBoolean(KEY_ANALYTICS_OPT_OUT, false),
         accuracyDisclaimerAccepted = prefs.getBoolean(KEY_DISCLAIMER_ACCEPTED, false),
         snapEnabled = prefs.getBoolean(KEY_SNAP, true),
+        guideEnabled = prefs.getBoolean(KEY_GUIDE, true),
     )
 
     private fun save(updated: AppSettings) {
@@ -61,6 +65,7 @@ class SettingsRepository(context: Context) {
             putBoolean(KEY_ANALYTICS_OPT_OUT, updated.analyticsOptOut)
             putBoolean(KEY_DISCLAIMER_ACCEPTED, updated.accuracyDisclaimerAccepted)
             putBoolean(KEY_SNAP, updated.snapEnabled)
+            putBoolean(KEY_GUIDE, updated.guideEnabled)
         }
         settings = updated
     }
@@ -73,6 +78,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_ANALYTICS_OPT_OUT = "analytics_opt_out"
         private const val KEY_DISCLAIMER_ACCEPTED = "accuracy_disclaimer_accepted"
         private const val KEY_SNAP = "snap_to_edges"
+        private const val KEY_GUIDE = "guide_lines"
 
         /** Reads the opt-out flag without building a repository; safe to call from a crash handler. */
         fun isAnalyticsOptedOut(context: Context): Boolean =

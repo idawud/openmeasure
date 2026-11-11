@@ -73,6 +73,10 @@
     <string name="settings_measuring">Measuring</string>
     <string name="settings_snap">Snap to edges</string>
     <string name="settings_snap_desc">Pull points onto nearby edges and corners</string>
+    <string name="settings_guide">Guide lines</string>
+    <string name="settings_guide_desc">Show level and plumb guides and lock the line to them when aligned</string>
+    <string name="measure_guide_level">Level</string>
+    <string name="measure_guide_plumb">Plumb</string>
     <string name="measure_snap_edge">Edge</string>
     <string name="measure_snap_corner">Corner</string>
     <string name="settings_feedback">Feedback</string>

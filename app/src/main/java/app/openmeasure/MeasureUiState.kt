@@ -36,6 +36,10 @@ data class MeasureUiState(
     val snapPoint: ScreenPoint? = null,
     /** Increments on every snap acquire; the UI ticks haptics when it changes. */
     val snapTick: Int = 0,
+    /** F12 guide references and alignment; null when disabled or no start point. */
+    val guide: GuideUi? = null,
+    /** Increments on every guide acquire; the UI ticks haptics when it changes. */
+    val guideTick: Int = 0,
     /** F9: rectangle mode (max 4 corners, closed quad with area). */
     val rectMode: Boolean = false,
     /** Area label + warnings once 4 corners exist in rectangle mode. */
