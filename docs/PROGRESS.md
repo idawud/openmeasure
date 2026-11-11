@@ -29,7 +29,7 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   13. T32 export: share CSV into spreadsheet, PDF into viewer (A4, multipage, thumbnails, missing photo ok); item share with/without photo.
   14. T29 box: W,D,H each <=1 cm on a known carton, all sides, H label placement, v1->v2 upgrade keeps history; not-level flag = spread > max(3 cm, 3%).
   15. T30 room: known room <=1 cm per 1 m wall; mini plan placement on narrow phones; plan screen rotate/split; SVG/PDF open in share targets; TalkBack summary.
-  16. NEW: install -> no 16 KB dialog; welcome screen then camera permission; placed points stay put (adb logcat -s OpenMeasureDrift, shown <2 mm still); redesign look: pills, +, tabs, mode picker, detail sheet; Height (ML Kit beta) still works.
+  16. CONFIRMED on Pixel 8 Pro 2026-11-11: no 16 KB dialog, welcome+permission ok, placed points stay put, new UI ok. Still to check: Height on ML Kit beta, rotation/split-screen, landscape layout.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
