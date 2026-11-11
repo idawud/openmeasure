@@ -3,6 +3,9 @@ package app.openmeasure
 import android.util.Log
 import app.openmeasure.ar.ArCameraView
 import app.openmeasure.ar.HitTestService
+import app.openmeasure.measure.coaching.CoachingState
+import app.openmeasure.measure.coaching.CoachingTracker
+import app.openmeasure.measure.confidence.TrackingStatus
 import app.openmeasure.measure.geometry.Vec3
 import app.openmeasure.measure.hit.HitSource
 import com.google.ar.core.Frame
@@ -22,11 +25,13 @@ data class SpikeUiState(
     val distanceCm: Float? = null,
     val distanceSource: HitSource = HitSource.NONE,
     val distanceConfidence: Float = 0f,
+    val coaching: CoachingState = CoachingState.MOVE_SLOWLY,
 )
 
 /** Runs hit tests on the GL thread (via ArCameraView.onFrame) and publishes state for Compose. */
 class SpikeController(private val view: ArCameraView) {
     private val service = HitTestService()
+    private val coachingTracker = CoachingTracker()
     private val _state = MutableStateFlow(SpikeUiState())
     val state: StateFlow<SpikeUiState> = _state.asStateFlow()
 
@@ -71,6 +76,12 @@ class SpikeController(private val view: ArCameraView) {
                 }
             }
         }
-        _state.value = SpikeUiState(tracking, live.source, live.confidence, a, b, dist, distSource, distConf)
+        val status = when (tracking) {
+            TrackingState.TRACKING -> TrackingStatus.TRACKING
+            TrackingState.PAUSED -> TrackingStatus.PAUSED
+            else -> TrackingStatus.STOPPED
+        }
+        val coaching = coachingTracker.update(System.nanoTime() / 1_000_000, status, live)
+        _state.value = SpikeUiState(tracking, live.source, live.confidence, a, b, dist, distSource, distConf, coaching)
     }
 }

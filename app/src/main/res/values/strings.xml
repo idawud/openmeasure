@@ -18,6 +18,8 @@
     <string name="spoken_no_level">Level reading unavailable</string>
     <string name="spike_place_point">Place point</string>
     <string name="spike_reset">Reset</string>
+    <string name="coaching_move_slowly">Move your phone slowly</string>
+    <string name="coaching_move_slowly_desc">Move your phone slowly to scan the surface</string>
     <string name="ar_idle">AR idle</string>
     <string name="ar_install_services">Install Google Play Services for AR</string>
     <string name="ar_permission_required">Camera permission required</string>

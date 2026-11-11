@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.openmeasure.measure.coaching.CoachingState
 import app.openmeasure.measure.hit.HitSource
 import app.openmeasure.measure.units.SpokenLength
 import app.openmeasure.settings.SettingsRepository
@@ -59,12 +60,14 @@ fun SpikeOverlay(controller: SpikeController, settingsRepository: SettingsReposi
             detectTapGestures { controller.tap(it.x, it.y) }
         },
     ) {
-        Canvas(Modifier.fillMaxSize()) {
+        val ready = s.coaching == CoachingState.READY
+        if (ready) Canvas(Modifier.fillMaxSize()) {
             val c = Offset(size.width / 2, size.height / 2)
-            val col = if (ok) Color.Green else Color.Red
+            val col = Color.Green
             drawCircle(col, radius = 18f, center = c, style = Stroke(3f))
             drawCircle(col, radius = 3f, center = c)
         }
+        if (!ready) CoachingHint(Modifier.align(Alignment.Center))
         Column(
             Modifier.align(Alignment.TopStart).padding(12.dp).background(Color(0xCC000000)).padding(8.dp),
         ) {
@@ -86,7 +89,7 @@ fun SpikeOverlay(controller: SpikeController, settingsRepository: SettingsReposi
             }
         }
         Column(Modifier.align(Alignment.BottomCenter).padding(24.dp)) {
-            Button(onClick = { controller.tap() }) { Text(stringResource(R.string.spike_place_point)) }
+            Button(onClick = { controller.tap() }, enabled = ready) { Text(stringResource(R.string.spike_place_point)) }
             Button(onClick = { controller.reset() }) { Text(stringResource(R.string.spike_reset)) }
         }
     }
