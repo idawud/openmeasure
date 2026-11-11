@@ -19,6 +19,8 @@
     <string name="measure_place_point">Place point</string>
     <string name="measure_place_point_desc">Place a measurement point at the crosshair</string>
     <string name="measure_reset">Reset</string>
+    <string name="measure_undo">Undo</string>
+    <string name="measure_undo_desc">Undo the last change to the measurement</string>
     <string name="measure_done">Done</string>
     <string name="measure_new">New</string>
     <string name="measure_total">Total %1$s</string>

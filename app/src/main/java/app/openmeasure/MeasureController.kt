@@ -21,40 +21,32 @@ import app.openmeasure.measure.session.MeasurementSession
 import com.google.ar.core.Anchor
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import com.google.ar.core.Pose as ArPose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** One drawn line with its label; [live] = last placed point to the reticle. Numbers only inside Length. */
-data class SegmentUi(val segment: ScreenSegment?, val label: LabelContent, val live: Boolean)
-
-/** Per-frame UI snapshot of the measurement path (screen-space, view pixels). */
-data class MeasureUiState(
-    val coaching: CoachingState = CoachingState.MOVE_SLOWLY,
-    /** Placed points projected to the screen; null entries are behind the camera. */
-    val dots: List<ScreenPoint?> = emptyList(),
-    /** Placed segments, plus a trailing live one while a path is being drawn. */
-    val segments: List<SegmentUi> = emptyList(),
-    /** Total metres; null unless >= 2 placed segments and all displayable. */
-    val totalMeters: Double? = null,
-    val pointCount: Int = 0,
-    /** Path was ended with Done; the next placed point starts a new path. */
-    val finished: Boolean = false,
-    val canAdd: Boolean = true,
-)
-
 /**
- * Point-to-point controller (F1). Runs on the GL thread via [ArCameraView.onFrame]; each placed point is backed
- * by an ARCore [Anchor] whose pose is fed into [MeasurementSession.updatePoints] every frame.
+ * Point-to-point controller (F1/F3/F4). Runs on the GL thread via [ArCameraView.onFrame]; each placed point is
+ * backed by an ARCore [Anchor] whose pose is fed into [MeasurementSession.updatePoints] every frame.
+ * UI-thread calls (drag, undo, remove) are queued and applied at the start of the next frame.
  */
 class MeasureController(private val view: ArCameraView, private val manager: ArSessionManager) {
-    private class Endpoint(val id: PointId, val anchor: Anchor, val hit: HitResult)
+    private class Drag(val id: PointId, @Volatile var x: Float, @Volatile var y: Float)
+
+    private val anchors = HashMap<PointId, Anchor>()
+    /** Original hit per point (source/confidence for badges); kept after removal so undo can restore it. */
+    private val hits = HashMap<PointId, HitResult>()
+    private val commands = ConcurrentLinkedQueue<() -> Unit>()
+    @Volatile private var dragTarget: Drag? = null
+    private var draggingId: PointId? = null
+    private var dragHit: ArHit? = null
 
     private val service = HitTestService()
     private val coachingTracker = CoachingTracker()
     private val session = MeasurementSession()
-    private val endpoints = ArrayList<Endpoint>()
     private var finished = false
     private val pendingDone = AtomicBoolean(false)
     private val pendingPlace = AtomicBoolean(false)
@@ -74,16 +66,85 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     /** Finish the current path (keeps it on screen); the next point starts a new one. */
     fun done() { pendingDone.set(true) }
 
+    /** Finger down on [id]: start dragging; [x],[y] are the (already lifted) view-pixel target. */
+    fun beginDrag(id: PointId, x: Float, y: Float) {
+        dragTarget = Drag(id, x, y)
+    }
+
+    fun dragTo(x: Float, y: Float) {
+        dragTarget?.let { it.x = x; it.y = y }
+    }
+
+    /** Finger lifted: commit the drag (re-anchor at the last valid hit). */
+    fun endDrag() {
+        dragTarget = null
+        commands += { finishDrag() }
+    }
+
+    /** Long-press: drop the drag and remove the point. */
+    fun remove(id: PointId) {
+        dragTarget = null
+        commands += { finishDrag(commit = false); session.removePoint(id); syncAnchors() }
+    }
+
+    fun undo() {
+        commands += { finishDrag(commit = false); session.undo(); finished = false; syncAnchors() }
+    }
+
     private fun clearAll() {
-        endpoints.forEach { it.anchor.detach() }
-        endpoints.clear()
+        draggingId = null
         session.clear()
+        syncAnchors()
         finished = false
     }
 
+    /** Makes anchors match the session: detach orphans, create/replace where a point has none or moved (undo). */
+    private fun syncAnchors() {
+        val sess = manager.session
+        val pts = session.state.points
+        val live = pts.map { it.id }.toSet()
+        anchors.keys.filter { it !in live }.forEach { anchors.remove(it)?.detach() }
+        if (sess == null) return
+        for (p in pts) {
+            val a = anchors[p.id]
+            val ap = a?.pose
+            val ok = a != null && a.trackingState != TrackingState.STOPPED &&
+                Vec3(ap!!.tx(), ap.ty(), ap.tz()).distanceTo(p.position) < 1e-3f
+            if (ok) continue
+            a?.detach()
+            anchors[p.id] = sess.createAnchor(ArPose.makeTranslation(p.position.x, p.position.y, p.position.z))
+        }
+    }
+
+    private fun finishDrag(commit: Boolean = true) {
+        val id = draggingId
+        val hit = dragHit
+        draggingId = null
+        dragHit = null
+        session.endMove()
+        val sess = manager.session ?: return
+        if (!commit || id == null || hit == null || session.state.point(id) == null) return
+        val fresh = hit.createAnchor(sess) ?: return
+        anchors.put(id, fresh)?.detach()
+        hits[id] = hit.result
+    }
+
+    private fun applyDrag(frame: Frame, status: TrackingStatus) {
+        val d = dragTarget ?: return
+        if (draggingId != d.id) { draggingId = d.id; dragHit = null }
+        if (status != TrackingStatus.TRACKING) return
+        val hit = service.hitTest(frame, d.x, d.y)
+        val pos = hit.result.position ?: return
+        if (session.movePoint(d.id, pos, hit.result.confidence)) {
+            dragHit = hit
+            hits[d.id] = hit.result
+        }
+    }
+
     private fun onFrame(frame: Frame) {
+        while (true) (commands.poll() ?: break).invoke()
         if (pendingReset.getAndSet(false)) clearAll()
-        if (pendingDone.getAndSet(false) && endpoints.isNotEmpty()) finished = true
+        if (pendingDone.getAndSet(false) && !session.state.isEmpty) finished = true
         val tracking = frame.camera.trackingState
         val status = when (tracking) {
             TrackingState.TRACKING -> TrackingStatus.TRACKING
@@ -97,13 +158,14 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val coaching = coachingTracker.update(System.nanoTime() / 1_000_000, status, live)
 
         if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) place(liveHit)
+        applyDrag(frame, status)
 
-        // Anchors keep points glued to the world as tracking refines.
+        // Anchors keep points glued to the world as tracking refines (a dragged point follows the finger instead).
         val updates = HashMap<PointId, Vec3>()
-        for (e in endpoints) {
-            if (e.anchor.trackingState == TrackingState.TRACKING) {
-                val t = e.anchor.pose
-                updates[e.id] = Vec3(t.tx(), t.ty(), t.tz())
+        for ((id, anchor) in anchors) {
+            if (id != draggingId && anchor.trackingState == TrackingState.TRACKING) {
+                val t = anchor.pose
+                updates[id] = Vec3(t.tx(), t.ty(), t.tz())
             }
         }
         if (updates.isNotEmpty()) session.updatePoints(updates)
@@ -144,8 +206,10 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             }
         }
         _state.value = MeasureUiState(
-            coaching, dots, segs, PathTotal.of(placed), pts.size, finished,
+            coaching, dots, pts.map { it.id }, segs, PathTotal.of(placed), pts.size, finished,
             canAdd = pts.size < PathTotal.MAX_POINTS,
+            canUndo = session.state.canUndo,
+            draggingId = draggingId,
         )
     }
 
@@ -153,28 +217,18 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val sess = manager.session ?: return
         val pos = hit.result.position ?: return
         if (finished) clearAll()
-        if (endpoints.size >= PathTotal.MAX_POINTS) return
+        if (session.state.points.size >= PathTotal.MAX_POINTS) return
         val anchor = hit.createAnchor(sess) ?: return
         val id = session.addPoint(pos, hit.result.confidence)
-        endpoints += Endpoint(id, anchor, hit.result)
-        if (endpoints.size >= 2) {
-            val prev = endpoints[endpoints.size - 2]
-            val pp = session.state.point(prev.id)?.position
-            val cm = (pp?.distanceTo(pos) ?: 0f) * 100.0
-            android.util.Log.i(
-                "OpenMeasureSpike",
-                "dist=%.1f cm source=%s/%s conf=%.2f/%.2f".format(
-                    cm, prev.hit.source, hit.result.source, prev.hit.confidence, hit.result.confidence,
-                ),
-            )
-        }
+        anchors[id] = anchor
+        hits[id] = hit.result
     }
 
     /** Endpoint as seen now: original hit source/confidence, camera distance from the current camera pose. */
     private fun observe(index: Int, camPos: Vec3): EndpointObservation {
-        val e = endpoints.getOrNull(index) ?: return EndpointObservation.NONE
-        val p = session.state.point(e.id)?.position ?: return EndpointObservation.NONE
-        return EndpointObservation(e.hit.source, e.hit.confidence, camPos.distanceTo(p))
+        val p = session.state.points.getOrNull(index) ?: return EndpointObservation.NONE
+        val h = hits[p.id] ?: return EndpointObservation.NONE
+        return EndpointObservation(h.source, h.confidence, camPos.distanceTo(p.position))
     }
 
     private companion object {

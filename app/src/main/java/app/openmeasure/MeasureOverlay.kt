@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -31,7 +32,8 @@ import app.openmeasure.settings.SettingsRepository
 /** Camera overlay: crosshair, placed points, line, live label, "+" and reset buttons. */
 @Composable
 fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRepository) {
-    val s by controller.state.collectAsState()
+    val stateHolder = controller.state.collectAsState()
+    val s by stateHolder
     val settings = settingsRepository.settings
     val view = LocalView.current
     val ready = s.coaching == CoachingState.READY
@@ -41,7 +43,11 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         if (placedPoints >= 2 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     Box(Modifier.fillMaxSize()) {
-        Canvas(Modifier.fillMaxSize()) {
+        Canvas(
+            Modifier.fillMaxSize().pointDragInput(stateHolder, controller) {
+                if (settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            },
+        ) {
             val line = Color(0xFFFFEB3B)
             s.segments.forEach { su ->
                 val it = su.segment ?: return@forEach
@@ -53,9 +59,11 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     pathEffect = if (su.live) PathEffect.dashPathEffect(floatArrayOf(18f, 12f)) else null,
                 )
             }
-            s.dots.filterNotNull().forEach {
-                drawCircle(Color.Black, 9.dp.toPx(), Offset(it.x, it.y))
-                drawCircle(Color.White, 6.dp.toPx(), Offset(it.x, it.y))
+            s.dots.forEachIndexed { i, d ->
+                if (d == null) return@forEachIndexed
+                val grown = if (s.ids.getOrNull(i) == s.draggingId) 4.dp.toPx() else 0f
+                drawCircle(Color.Black, 9.dp.toPx() + grown, Offset(d.x, d.y))
+                drawCircle(Color.White, 6.dp.toPx() + grown, Offset(d.x, d.y))
             }
             if (ready) {
                 val c = Offset(size.width / 2, size.height / 2)
@@ -84,13 +92,24 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 modifier = Modifier.semantics { contentDescription = placeDesc },
             ) { Text(stringResource(R.string.measure_place_point)) }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                val undoDesc = stringResource(R.string.measure_undo_desc)
+                Button(
+                    onClick = { controller.undo() },
+                    enabled = s.canUndo,
+                    modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = undoDesc },
+                ) { Text(stringResource(R.string.measure_undo)) }
                 if (s.pointCount > 0) {
                     // "Done" ends the current path; afterwards the same button reads "New" (next point starts fresh).
-                    Button(onClick = { if (s.finished) controller.reset() else controller.done() }) {
+                    Button(
+                        onClick = { if (s.finished) controller.reset() else controller.done() },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) {
                         Text(stringResource(if (s.finished) R.string.measure_new else R.string.measure_done))
                     }
                 }
-                Button(onClick = { controller.reset() }) { Text(stringResource(R.string.measure_reset)) }
+                Button(onClick = { controller.reset() }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.measure_reset))
+                }
             }
         }
     }
