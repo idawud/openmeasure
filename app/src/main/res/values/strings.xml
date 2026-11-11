@@ -1,4 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">OpenMeasure</string>
+
+    <string name="tab_measure">Measure</string>
+    <string name="tab_level">Level</string>
+    <string name="tab_height">Height</string>
+    <string name="level_coming_soon">Level tool coming soon</string>
+    <string name="height_depth_note">Depth-capable phones only</string>
+    <string name="open_settings">Open settings</string>
+    <string name="back">Back</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="settings_units">Units</string>
+    <string name="units_metric">Metric</string>
+    <string name="units_imperial">Imperial</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="settings_haptics">Haptics</string>
+    <string name="settings_haptics_desc">Vibrate on taps and measurements</string>
+    <string name="settings_sound">Sound</string>
+    <string name="settings_sound_desc">Play sounds on taps and measurements</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_analytics">Opt out of analytics</string>
+    <string name="settings_analytics_desc">Do not send anonymous usage data</string>
+    <string name="settings_about">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_on_device">All processing on device</string>
 </resources>

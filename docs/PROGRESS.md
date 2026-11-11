@@ -2,13 +2,13 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 0 (spike)
-Last committed task: T14 (units formatter, tests pass); T07 code committed, NOT ticked (awaiting phone test + GO/NO-GO)
+Last committed task: T17 (tabs + settings, assembleDebug passes); T07 code committed, NOT ticked (awaiting phone test + GO/NO-GO)
 
 ## In progress
 - Task: T07 — waiting on owner's manual accuracy test on the Pixel 8 Pro
 
 ## Next step
-- Owner reports T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. Phase 1 work is provisional on GO. Done T08, T09, T14 (phone-independent). Next: T10-T13 UI (build-only, unverified on device).
+- Owner reports T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. Phase 1 work is provisional on GO. Done T08, T09, T14, T17 (phone-independent). Owner chose build-only continuation. Next: T10-T13 UI (build-only, unverified on device).
 - GO: continue with T08. NO-GO: stop and discuss with owner.
 
 ## Blockers / decisions needed from the owner
@@ -36,3 +36,4 @@ Last committed task: T14 (units formatter, tests pass); T07 code committed, NOT 
 - Engine: core-measure model/Path.kt, session/MeasurementSession.kt. Wire: listener -> StateFlow; endMove() on drag end; updatePoints(anchors) per frame; after undo/remove re-sync anchors.
 - Confidence: core-measure confidence/ConfidenceScorer.score(...) -> level/score/reason; map ARCore TrackingState to TrackingStatus in core-ar; hide number when !canDisplayNumber. Tunable: PLANE_HIGH_MIN_CONFIDENCE (0.9).
 - Units: core-measure units/LengthFormatter.format(m, UnitSystem), defaultSystemForRegion(country), UnitSystem.toggled().
+- Settings: app/settings/SettingsRepository (SharedPreferences); haptics/sound/analytics toggles stored but not wired yet. Eyeball hand-drawn icons on device.
