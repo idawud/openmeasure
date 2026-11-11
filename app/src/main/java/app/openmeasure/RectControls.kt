@@ -2,6 +2,8 @@ package app.openmeasure
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,17 +37,18 @@ import app.openmeasure.measure.units.UnitSystem
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
-/** F9: Line / Rectangle mode toggle, plus "Detect" (auto-detect at the reticle) in rectangle mode. */
+/** F9/F14/F16: Line / Rectangle / Angle / Box mode chips, plus "Detect" (auto-detect at the reticle) in rectangle mode. */
 @Composable
-fun RectModeBar(rectMode: Boolean, angleMode: Boolean, ready: Boolean, controller: MeasureController, modifier: Modifier = Modifier) {
+fun RectModeBar(rectMode: Boolean, angleMode: Boolean, boxMode: Boolean, ready: Boolean, controller: MeasureController, modifier: Modifier = Modifier) {
     val modeDesc = stringResource(R.string.measure_mode_desc)
     Row(
-        modifier.semantics { contentDescription = modeDesc },
+        // Scrolls horizontally when four chips (+ Detect) do not fit a narrow window.
+        modifier.horizontalScroll(rememberScrollState()).semantics { contentDescription = modeDesc },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         FilterChip(
-            selected = !rectMode && !angleMode, onClick = { controller.setRectMode(false) },
+            selected = !rectMode && !angleMode && !boxMode, onClick = { controller.setRectMode(false) },
             label = { Text(stringResource(R.string.measure_mode_line)) }, modifier = Modifier.heightIn(min = 48.dp),
         )
         FilterChip(
@@ -55,6 +58,10 @@ fun RectModeBar(rectMode: Boolean, angleMode: Boolean, ready: Boolean, controlle
         FilterChip(
             selected = angleMode, onClick = { controller.setAngleMode(true) },
             label = { Text(stringResource(R.string.measure_mode_angle)) }, modifier = Modifier.heightIn(min = 48.dp),
+        )
+        FilterChip(
+            selected = boxMode, onClick = { controller.setBoxMode(true) },
+            label = { Text(stringResource(R.string.measure_mode_box)) }, modifier = Modifier.heightIn(min = 48.dp),
         )
         if (rectMode) {
             val detectDesc = stringResource(R.string.measure_detect_desc)

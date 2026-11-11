@@ -46,6 +46,15 @@
     <string name="measure_mode_rect">Rectangle</string>
     <string name="measure_mode_angle">Angle</string>
     <string name="spoken_angle_confidence">%1$s, %2$s confidence</string>
+    <string name="measure_mode_box">Box</string>
+    <string name="box_step_a">Step 1 of 3: aim at a bottom corner of the box and tap Place point</string>
+    <string name="box_step_b">Step 1 of 3: place the next bottom corner along the same edge (width)</string>
+    <string name="box_step_c">Step 2 of 3: place a point on the adjacent bottom edge (depth)</string>
+    <string name="box_step_top">Step 3 of 3: place a point on the top of the box (height)</string>
+    <string name="box_step_done">Done. Place point starts a new box</string>
+    <string name="box_base_not_level">Base points not level</string>
+    <string name="box_invalid">Box too small or top below base. Drag or undo</string>
+    <string name="spoken_volume_confidence">%1$s, %2$s confidence</string>
     <string name="measure_mode_desc">Measuring mode</string>
     <string name="measure_detect">Detect</string>
     <string name="measure_detect_desc">Detect a rectangle at the crosshair</string>
@@ -115,6 +124,7 @@
     <string name="history_kind_line">Line path</string>
     <string name="history_kind_rect">Rectangle</string>
     <string name="history_kind_height">Height</string>
+    <string name="history_kind_box">Box</string>
     <string name="history_confidence">%1$s confidence</string>
     <string name="history_row_desc">%1$s, %2$s, %3$s, %4$s</string>
     <string name="history_photo_desc">Saved photo</string>

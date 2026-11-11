@@ -25,11 +25,13 @@ internal object ExportActions {
             MeasurementKind.LINE_PATH -> ExportKind.LINE_PATH
             MeasurementKind.RECTANGLE -> ExportKind.RECTANGLE
             MeasurementKind.HEIGHT -> ExportKind.HEIGHT
+            MeasurementKind.BOX -> ExportKind.BOX
         },
         when (item.kind) {
             MeasurementKind.LINE_PATH -> item.totalLengthMeters
             MeasurementKind.RECTANGLE -> item.areaSquareMeters
             MeasurementKind.HEIGHT -> item.heightMeters
+            MeasurementKind.BOX -> item.volumeCubicMeters
         },
         item.confidenceLevel,
         item.note,

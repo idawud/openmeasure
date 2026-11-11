@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /** What was measured. Stored by name so reordering the enum never corrupts old rows. */
-enum class MeasurementKind { LINE_PATH, RECTANGLE, HEIGHT }
+enum class MeasurementKind { LINE_PATH, RECTANGLE, HEIGHT, BOX }
 
 @Entity(tableName = "measurements")
 data class MeasurementEntity(
@@ -22,4 +22,6 @@ data class MeasurementEntity(
     /** World points as `[[x,y,z],...]`, see [PointsJson]. */
     val pointsJson: String = "[]",
     val photoUri: String? = null,
+    /** BOX volume in m³ (added in schema v2). */
+    val volumeCubicMeters: Double? = null,
 )

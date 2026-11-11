@@ -28,6 +28,23 @@ class HistoryMappingTest {
         assertEquals(item, item.toEntity().toItem())
     }
 
+    @Test fun boxRoundTrip() {
+        val item = HistoryItem(
+            createdAtMillis = 5L, kind = MeasurementKind.BOX, volumeCubicMeters = 0.024, confidenceLevel = "MEDIUM",
+            points = List(4) { WorldPoint(it.toFloat(), 0f, 0f) },
+        )
+        val e = item.toEntity()
+        assertEquals("BOX", e.kind)
+        assertEquals(0.024, e.volumeCubicMeters!!, 0.0)
+        assertEquals(item, e.toItem())
+    }
+
+    @Test fun migrationAddsNullableVolumeColumn() {
+        assertEquals("ALTER TABLE `measurements` ADD COLUMN `volumeCubicMeters` REAL", AppDatabase.SQL_1_2)
+        assertEquals(1, AppDatabase.MIGRATION_1_2.startVersion)
+        assertEquals(2, AppDatabase.MIGRATION_1_2.endVersion)
+    }
+
     @Test fun unknownKindFallsBack() {
         val e = MeasurementEntity(createdAtMillis = 1, kind = "FUTURE", confidenceLevel = "LOW")
         assertEquals(MeasurementKind.LINE_PATH, e.toItem().kind)

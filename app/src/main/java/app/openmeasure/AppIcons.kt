@@ -56,6 +56,11 @@ object AppIcons {
     /** Rectangle outline: Rectangle history entries. */
     val Rectangle: ImageVector by lazy { icon("Rectangle", "M4,6h16v12h-16z M6,8v8h12v-8z") }
 
+    /** Cube outline: Box (volume) history entries. */
+    val Box: ImageVector by lazy {
+        icon("Box", "M12,2l9,5v10l-9,5l-9,-5v-10z M12,4.3l6.9,3.7l-6.9,3.7l-6.9,-3.7z M5,9.7l6,3.3v6.6l-6,-3.3z M13,13l6,-3.3v6.6l-6,3.3z")
+    }
+
     private fun icon(name: String, pathData: String): ImageVector =
         ImageVector.Builder(
             name = name,

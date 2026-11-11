@@ -48,6 +48,7 @@ internal fun DetailDialog(
                     "${kindLabel(item.kind)} · ${stringResource(R.string.history_confidence, confidenceLabel(item.confidenceLevel))}",
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium,
                 )
+                boxDimsText(item, units)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                 Text(dateText(item.createdAtMillis), style = MaterialTheme.typography.bodySmall)
                 if (item.points.isNotEmpty()) {
                     Text(stringResource(R.string.history_points, item.points.size), style = MaterialTheme.typography.bodySmall)

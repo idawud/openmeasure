@@ -87,6 +87,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         ) {
             val line = Color(0xFFFFEB3B)
             s.guide?.let { drawGuides(it) }
+            s.box?.let { drawBoxEdges(it) }
             s.segments.forEach { su ->
                 val it = su.segment ?: return@forEach
                 drawLine(
@@ -127,11 +128,13 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         }
         s.angle?.let { AngleLabelView(it) }
         s.rect?.let { RectAreaLabel(it, settings.unitSystem) }
+        s.box?.let { BoxVolumeLabel(it, settings.unitSystem) }
         s.totalMeters?.let {
             PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 72.dp))
+        s.box?.let { BoxStepHint(it.step, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp, start = 16.dp, end = 16.dp)) }
         DetectFailHint(s.detectFailTick, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp))
         s.guide?.takeIf { ready }?.let {
             GuideChip(it.state, Modifier.align(Alignment.Center).padding(top = 72.dp))
@@ -157,7 +160,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     snackbar, Modifier.padding(bottom = if (short) 4.dp else 8.dp), photo = cameraView to layer,
                 ) { uri -> cand.toItem(uri, System.currentTimeMillis()) }
             }
-            RectModeBar(s.rectMode, s.angleMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
+            RectModeBar(s.rectMode, s.angleMode, s.boxMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
             val placeDesc = stringResource(if (s.rectMode) R.string.measure_place_corner_desc else R.string.measure_place_point_desc)
             val placeButton: @Composable () -> Unit = {
                 Button(
@@ -175,7 +178,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     enabled = s.canUndo,
                     modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = undoDesc },
                 ) { Text(stringResource(R.string.measure_undo)) }
-                if (s.pointCount > 0 && !s.rectMode && !s.angleMode) {
+                if (s.pointCount > 0 && !s.rectMode && !s.angleMode && !s.boxMode) {
                     // "Done" ends the current path; afterwards the same button reads "New" (next point starts fresh).
                     Button(
                         onClick = { if (s.finished) controller.reset() else controller.done() },

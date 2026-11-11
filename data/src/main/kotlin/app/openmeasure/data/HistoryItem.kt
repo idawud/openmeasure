@@ -13,14 +13,16 @@ data class HistoryItem(
     val confidenceLevel: String,
     val points: List<WorldPoint> = emptyList(),
     val photoUri: String? = null,
+    val volumeCubicMeters: Double? = null,
 )
 
 fun HistoryItem.toEntity() = MeasurementEntity(
     id, createdAtMillis, kind.name, title, note, totalLengthMeters, areaSquareMeters, heightMeters,
-    confidenceLevel, PointsJson.encode(points), photoUri,
+    confidenceLevel, PointsJson.encode(points), photoUri, volumeCubicMeters,
 )
 
 fun MeasurementEntity.toItem() = HistoryItem(
     id, createdAtMillis, MeasurementKind.entries.firstOrNull { it.name == kind } ?: MeasurementKind.LINE_PATH,
     title, note, totalLengthMeters, areaSquareMeters, heightMeters, confidenceLevel, PointsJson.decode(pointsJson), photoUri,
+    volumeCubicMeters,
 )

@@ -52,6 +52,10 @@ data class MeasureUiState(
     val angleMode: Boolean = false,
     /** Angle label and arc data once 3 points exist in angle mode. */
     val angle: AngleUi? = null,
+    /** F14: box (volume) mode (A, B width; C depth; T height). */
+    val boxMode: Boolean = false,
+    /** Box step, wireframe and volume label; non-null in box mode. */
+    val box: BoxUi? = null,
     /** Area label + warnings once 4 corners exist in rectangle mode. */
     val rect: RectUi? = null,
     /** Increments each time auto-detect finds nothing; the UI shows the manual-corners hint. */

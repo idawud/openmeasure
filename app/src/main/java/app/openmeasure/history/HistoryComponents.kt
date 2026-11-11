@@ -39,9 +39,12 @@ import app.openmeasure.AppIcons
 import app.openmeasure.R
 import app.openmeasure.data.HistoryItem
 import app.openmeasure.data.MeasurementKind
+import app.openmeasure.measure.box.BoxFit
+import app.openmeasure.measure.geometry.Vec3
 import app.openmeasure.measure.units.AreaFormatter
 import app.openmeasure.measure.units.LengthFormatter
 import app.openmeasure.measure.units.UnitSystem
+import app.openmeasure.measure.units.VolumeFormatter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.DateFormat
@@ -52,7 +55,17 @@ internal fun valueText(item: HistoryItem, units: UnitSystem): String = when (ite
     MeasurementKind.LINE_PATH -> item.totalLengthMeters?.let { LengthFormatter.format(it, units) }
     MeasurementKind.RECTANGLE -> item.areaSquareMeters?.let { AreaFormatter.format(it, units) }
     MeasurementKind.HEIGHT -> item.heightMeters?.let { LengthFormatter.format(it, units) }
+    MeasurementKind.BOX -> item.volumeCubicMeters?.let { VolumeFormatter.format(it, units) }
 } ?: "—"
+
+/** "W 60 cm × D 40 cm × H 25 cm" for a BOX saved with its 4 tapped points (A, B, C, top); else null. */
+internal fun boxDimsText(item: HistoryItem, units: UnitSystem): String? {
+    if (item.kind != MeasurementKind.BOX || item.points.size != 4) return null
+    val (a, b, c, t) = item.points.map { Vec3(it.x, it.y, it.z) }
+    val box = BoxFit.fit(a, b, c, t).takeIf { it.isValid } ?: return null
+    val f = { m: Double -> LengthFormatter.format(m, units) }
+    return "W ${f(box.width)} × D ${f(box.depth)} × H ${f(box.height)}"
+}
 
 internal fun dateText(millis: Long): String =
     DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(Date(millis))
@@ -63,6 +76,7 @@ internal fun kindLabel(kind: MeasurementKind): String = stringResource(
         MeasurementKind.LINE_PATH -> R.string.history_kind_line
         MeasurementKind.RECTANGLE -> R.string.history_kind_rect
         MeasurementKind.HEIGHT -> R.string.history_kind_height
+        MeasurementKind.BOX -> R.string.history_kind_box
     },
 )
 
@@ -79,6 +93,7 @@ internal fun kindIcon(kind: MeasurementKind) = when (kind) {
     MeasurementKind.LINE_PATH -> AppIcons.Measure
     MeasurementKind.RECTANGLE -> AppIcons.Rectangle
     MeasurementKind.HEIGHT -> AppIcons.Height
+    MeasurementKind.BOX -> AppIcons.Box
 }
 
 @Composable
