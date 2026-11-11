@@ -86,10 +86,10 @@ fun ArScreen(settingsRepository: SettingsRepository) {
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (state == ArSessionState.Running) {
-            val spike = remember { SpikeController(cameraView) }
-            DisposableEffect(spike) { spike.attach(); onDispose { spike.detach() } }
+            val measure = remember { MeasureController(cameraView, manager) }
+            DisposableEffect(measure) { measure.attach(); onDispose { measure.detach() } }
             AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
-            SpikeOverlay(spike, settingsRepository)
+            MeasureOverlay(measure, settingsRepository)
         } else {
             val text = when (val s = state) {
                 ArSessionState.NeedsInstall -> stringResource(R.string.ar_install_services)

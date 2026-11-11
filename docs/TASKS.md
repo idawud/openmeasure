@@ -18,7 +18,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T08 [opus] Measurement engine (`core-measure`): Point, Segment, Path models; length in metres; live update from anchors; unit tests.
 - [x] T09 [opus] Confidence scorer (F18): combine tracking state, depth confidence at both ends, camera distance → High/Medium/Low; unit tests.
 - [x] T10 [sonnet] Coaching overlay (F2): "Move your phone slowly" until surface/depth found; reticle appears when ready.
-- [ ] T11 [sonnet] Point-to-point UI (F1): + button drops start/end; line + live label rendered in AR; label always faces user.
+- [x] T11 [sonnet] Point-to-point UI (F1): + button drops start/end; line + live label rendered in AR; label always faces user.
 - [ ] T12 [sonnet] Multi-segment path (F3) with per-segment and total labels.
 - [ ] T13 [sonnet] Edit points (F4): drag endpoints, undo, clear.
 - [x] T14 [haiku] Units (F5): metric/imperial formatter + locale default + one-tap toggle; unit tests for formatting and rounding (1 cm / 0.5 in).
