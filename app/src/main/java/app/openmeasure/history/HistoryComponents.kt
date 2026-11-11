@@ -122,7 +122,7 @@ internal fun Thumbnail(photoUri: String?, kind: MeasurementKind, modifier: Modif
     }
 }
 
-private fun loadThumb(context: Context, uri: Uri, sizePx: Int): Bitmap? = try {
+internal fun loadThumb(context: Context, uri: Uri, sizePx: Int): Bitmap? = try {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         context.contentResolver.loadThumbnail(uri, Size(sizePx, sizePx), null)
     } else {

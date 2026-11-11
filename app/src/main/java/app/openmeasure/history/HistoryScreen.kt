@@ -1,5 +1,6 @@
 package app.openmeasure.history
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import app.openmeasure.R
 import app.openmeasure.data.HistoryItem
 import app.openmeasure.data.HistoryRepository
 import app.openmeasure.settings.SettingsRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 /** F11 History: newest first, tap for details (note, delete), overflow "Clear all". Full-screen like Settings. */
@@ -56,7 +58,26 @@ fun HistoryScreen(settingsRepository: SettingsRepository, onBack: () -> Unit) {
     var menuOpen by rememberSaveable { mutableStateOf(false) }
     val deletedText = stringResource(R.string.history_deleted)
     val undoText = stringResource(R.string.history_undo)
+    val exportedText = stringResource(R.string.history_exported)
+    val exportFailedText = stringResource(R.string.history_export_failed)
+    val shareText = stringResource(R.string.history_share_item)
     BackHandler(onBack = onBack)
+
+    fun runExport(list: List<HistoryItem>, mime: String, write: suspend (List<HistoryItem>) -> Uri) {
+        if (list.isEmpty()) return
+        scope.launch {
+            try {
+                val uri = write(list)
+                if (snackbar.showSnackbar(exportedText, shareText) == SnackbarResult.ActionPerformed) {
+                    context.startActivity(ExportActions.fileShareIntent(context, uri, mime))
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                snackbar.showSnackbar(exportFailedText)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -70,6 +91,16 @@ fun HistoryScreen(settingsRepository: SettingsRepository, onBack: () -> Unit) {
                         Icon(AppIcons.MoreVert, stringResource(R.string.history_more))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.history_export_csv)) },
+                            enabled = !items.isNullOrEmpty(),
+                            onClick = { menuOpen = false; runExport(items.orEmpty(), "text/csv") { ExportActions.exportCsv(context, it, units) } },
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.history_export_pdf)) },
+                            enabled = !items.isNullOrEmpty(),
+                            onClick = { menuOpen = false; runExport(items.orEmpty(), "application/pdf") { ExportActions.exportPdf(context, it, units) } },
+                        )
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.history_clear_all)) },
                             onClick = { menuOpen = false; confirmClear = true },
@@ -105,6 +136,10 @@ fun HistoryScreen(settingsRepository: SettingsRepository, onBack: () -> Unit) {
             item = selected, units = units,
             onSaveNote = { note -> scope.launch { repo.updateNote(selected.id, note) } },
             onDelete = { confirmDelete = true },
+            onShare = {
+                try { context.startActivity(ExportActions.itemShareIntent(context, selected, units)) }
+                catch (e: android.content.ActivityNotFoundException) { scope.launch { snackbar.showSnackbar(exportFailedText) } }
+            },
             onDismiss = { selectedId = null; confirmDelete = false },
         )
         if (confirmDelete) ConfirmDialog(

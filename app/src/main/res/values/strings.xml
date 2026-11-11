@@ -131,5 +131,12 @@
     <string name="history_clear_title">Clear all history?</string>
     <string name="history_clear_body">This removes every saved measurement from this device. Photos stay in your gallery.</string>
     <string name="history_cancel">Cancel</string>
+    <string name="history_export_csv">Export CSV</string>
+    <string name="history_export_pdf">Export PDF</string>
+    <string name="history_exported">Exported</string>
+    <string name="history_export_failed">Could not export</string>
+    <string name="history_share_item">Share</string>
+    <string name="history_share_item_desc">Share this measurement</string>
+    <string name="export_pdf_title">OpenMeasure measurements</string>
     <string name="history_points">%1$d points</string>
 </resources>
