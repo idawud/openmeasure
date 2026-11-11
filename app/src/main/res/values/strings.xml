@@ -12,8 +12,6 @@
     <string name="height_depth_note">Depth-capable phones only</string>
     <string name="open_settings">Open settings</string>
     <string name="back">Back</string>
-    <string name="spoken_line">Line, %1$s</string>
-    <string name="spoken_no_distance">Distance unavailable</string>
     <string name="spoken_level">Level, %1$s off</string>
     <string name="spoken_no_level">Level reading unavailable</string>
     <string name="measure_place_point">Place point</string>

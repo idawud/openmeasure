@@ -1,11 +1,11 @@
 # PROGRESS (overwrite this file; keep under 40 lines)
 
 Last updated: 2026-11-11
-Current phase: Phase 1 (provisional: T07 GO/NO-GO still pending)
-Last committed task: T20 (large-screen code audit; emulator checks pending). Done: T01-T06, T08-T20. T07 code committed, NOT ticked.
+Current phase: Phase 1 complete except phone-gated T07 + T22. Phase 2 not started.
+Last committed task: T21 (133 JVM tests, lint 0 errors/5 warnings). Done: T01-T06, T08-T21. Open: T07 (phone), T22 (phone).
 
 ## In progress
-- Owner chose build-only continuation. Next: T21 (lint + release checklist); T22 + T07 need phone (unverified on device).
+- Owner chose build-only continuation. Next: wait for owner phone results (T07 -> docs/ACCURACY.md, GO/NO-GO), then T22 and tuning; Phase 2 only after GO (unverified on device).
 - T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. NO-GO = stop and ask owner.
 
 ## Blockers / decisions needed from the owner
@@ -34,3 +34,4 @@ Last committed task: T20 (large-screen code audit; emulator checks pending). Don
 - Tunables guessed, need phone tuning: hit-test weights, PLANE_HIGH_MIN_CONFIDENCE (0.9).
 - Spike points are plain Vec3 (no anchors). Settings haptics/sound wired only in Level; analytics opt-out also
   gates local-only crash logs (filesDir/crashes). Hand-drawn icons: eyeball on device.
+- Lint leftovers: coroutines 1.11.0 available; 16KB-align warning from mediapipe native lib (third-party); placeholder launcher icon needs art; release minify off, no signingConfig. docs/RELEASE_CHECKLIST.md written.

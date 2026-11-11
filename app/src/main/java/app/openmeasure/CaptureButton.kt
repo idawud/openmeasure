@@ -1,5 +1,6 @@
 package app.openmeasure
 
+import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
@@ -44,7 +45,9 @@ fun CaptureButton(layer: GraphicsLayer, camera: ArCameraView, haptics: Boolean, 
             onClick = {
                 if (busy || !camera.hasFrame) return@Button
                 busy = true
-                if (haptics) view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                if (haptics) view.performHapticFeedback(
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.KEYBOARD_TAP,
+                )
                 scope.launch {
                     val uri = try { CaptureController.captureAndSave(context, camera, layer) } finally { busy = false }
                     if (uri == null) {
