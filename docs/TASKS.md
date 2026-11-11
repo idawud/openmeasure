@@ -21,7 +21,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [ ] T11 [sonnet] Point-to-point UI (F1): + button drops start/end; line + live label rendered in AR; label always faces user.
 - [ ] T12 [sonnet] Multi-segment path (F3) with per-segment and total labels.
 - [ ] T13 [sonnet] Edit points (F4): drag endpoints, undo, clear.
-- [ ] T14 [haiku] Units (F5): metric/imperial formatter + locale default + one-tap toggle; unit tests for formatting and rounding (1 cm / 0.5 in).
+- [x] T14 [haiku] Units (F5): metric/imperial formatter + locale default + one-tap toggle; unit tests for formatting and rounding (1 cm / 0.5 in).
 - [ ] T15 [sonnet] Level tool (F6): rotation-vector sensor, low-pass filter, flat (bubble) and edge modes, green at 0°, optional rising tone.
 - [ ] T16 [sonnet] Capture and share (F7): render overlay into photo, save via MediaStore, share sheet.
 - [ ] T17 [haiku] Bottom tab switcher Measure · Level · Height (Height disabled placeholder), settings screen (units, haptics, sound, analytics opt-out, about).
