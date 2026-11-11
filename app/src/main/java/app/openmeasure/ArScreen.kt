@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.viewinterop.AndroidView
+import app.openmeasure.ar.ArCameraView
 import app.openmeasure.ar.ArSessionManager
 import app.openmeasure.ar.ArSessionState
 
@@ -67,12 +69,30 @@ fun ArScreen() {
         }
     }
 
-    val text = when (val s = state) {
-        ArSessionState.Idle -> "AR idle"
-        ArSessionState.NeedsInstall -> "Install Google Play Services for AR"
-        ArSessionState.NeedsPermission -> "Camera permission required"
-        ArSessionState.Running -> "AR running (depth: ${manager.isDepthSupported})"
-        is ArSessionState.Error -> "AR error: ${s.message}"
+    val cameraView = remember { ArCameraView(context, manager) }
+    DisposableEffect(lifecycleOwner) {
+        val glObserver = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> cameraView.onResume()
+                Lifecycle.Event.ON_PAUSE -> cameraView.onPause()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(glObserver)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(glObserver); cameraView.onPause() }
     }
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(text) }
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        if (state == ArSessionState.Running) {
+            AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
+        } else {
+            val text = when (val s = state) {
+                ArSessionState.NeedsInstall -> "Install Google Play Services for AR"
+                ArSessionState.NeedsPermission -> "Camera permission required"
+                is ArSessionState.Error -> "AR error: ${s.message}"
+                else -> "AR idle"
+            }
+            Text(text)
+        }
+    }
 }
