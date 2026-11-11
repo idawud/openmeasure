@@ -2,14 +2,14 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 0
-Last committed task: T02 (dependencies, assembleDebug passes)
+Last committed task: T03 (manifest + ArAvailability stub, assembleDebug passes)
 
 ## In progress
-- Task: T03 (manifest: camera permission, ARCore optional meta-data, availability stub, rotation/resizing) — not started
+- Task: T04 (ARCore session lifecycle in core-ar) — delegated to implementer
 - Uncommitted changes: none
 
 ## Next step
-- Start T03 with `scaffolder` (Haiku).
+- T04 via `implementer` (Sonnet): install check, create/resume/pause, camera permission flow, Depth API when supported.
 
 ## Blockers / decisions needed from the owner
 - none
@@ -22,3 +22,4 @@ Last committed task: T02 (dependencies, assembleDebug passes)
 - Dependencies (reasons): ARCore 1.57.0 (AR session/tracking); Filament 1.77.3 in core-ar (rendering);
   ML Kit pose-detection 17.0.0 (person height; accurate variant is separate artifact);
   Room 2.8.5 + KSP 2.3.13 in data (history DB; KSP has no 2.4.x, works with Kotlin 2.4.21).
+- ArAvailability.check maps UNKNOWN_* and NOT_CAPABLE to Unsupported; APK_TOO_OLD/NOT_INSTALLED to NeedsInstall.
