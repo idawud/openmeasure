@@ -1,40 +1,32 @@
 # PROGRESS (overwrite this file; keep under 40 lines)
 
 Last updated: 2026-11-11
-Current phase: Phase 0 (spike)
-Last committed task: T19 (disclaimer + local crash logs, assembleDebug passes); T07 code committed, NOT ticked (awaiting phone test + GO/NO-GO)
+Current phase: Phase 1 (provisional: T07 GO/NO-GO still pending)
+Last committed task: T15 (level tool). Done: T01-T06, T08, T09, T14, T15, T17, T19. T07 code committed, NOT ticked.
 
 ## In progress
-- Task: T07 — waiting on owner's manual accuracy test on the Pixel 8 Pro
-
-## Next step
-- Owner reports T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. Phase 1 work is provisional on GO. Done T08, T09, T14, T17, T19 (phone-independent). Owner chose build-only continuation. Next: T10-T13 UI (build-only, unverified on device).
-- GO: continue with T08. NO-GO: stop and discuss with owner.
+- Owner chose build-only continuation. Next phone-independent: T18 (accessibility), then T10-T13/T16 UI (unverified on device).
+- T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. NO-GO = stop and ask owner.
 
 ## Blockers / decisions needed from the owner
-- MANUAL TEST T05 + T07 (Pixel 8 Pro, Android 17):
-  1. Build/install: `./gradlew installDebug` (phone USB debugging on) or open in Android Studio and Run.
-  2. T05 checks: feed shows after camera permission, not stretched/flipped; rotate 0/90/180/270 and
-     split-screen OK; Home then return = no black screen/crash; smooth ~30 fps.
-  3. T07 accuracy: pick 3 reference objects with a known length (e.g. A4 long side 29.7 cm,
-     a 1 m ruler/door-frame width, a ~2 m wall/door height). Move slowly to build tracking first.
-  4. For each: tap point A, then B (reticle on each end), read distance. Repeat 5 times per object.
-  5. Watch logs: `adb logcat -s OpenMeasureSpike` (lines "dist=.. cm source=.. conf=..").
-  6. Send Claude per object: true length, the 5 readings, source (DEPTH/PLANE), and any oddities.
-  Go criterion: see docs/SPEC.md accuracy target (about 1 cm on short, ~1-2% on longer).
+- MANUAL TEST (Pixel 8 Pro, Android 17): `./gradlew installDebug`, then:
+  1. T05 camera: feed shows after permission, not stretched/flipped; rotate 0/90/180/270 + split-screen OK;
+     Home then return = no black screen/crash; smooth ~30 fps.
+  2. T07 accuracy: 3 known-length objects (A4 29.7 cm, ~1 m ruler/door width, ~2 m door height).
+     Tap A then B, 5 readings each. `adb logcat -s OpenMeasureSpike` gives "dist=.. cm source=.. conf=..".
+     Send per object: true length, 5 readings, source (DEPTH/PLANE), oddities. Target ~1 cm short / 1-2% long (SPEC).
+  3. T15 level: Level tab; phone flat shows bubble, on its side shows bar; green <0.5 deg; check with a known-level
+     surface; tone/haptic follow Settings toggles; rotate = brief reset only.
+  4. T17/T19: tabs, gear icon renders sensibly, settings persist, disclaimer shows once.
 
 ## Notes that a new session must know
-- Reference device: Pixel 8 Pro, Android 17.
-- Versions: Gradle 9.9.1, AGP 9.5.1, Kotlin 2.4.21, Compose BOM 2026.09.00.
-- SDK at C:/Users/idawud/AppData/Local/Android/Sdk via gitignored local.properties.
-- core-measure pins Kotlin jvmTarget 17 (Kotlin defaulted to 25, mismatching Java).
-- Deps (reasons): ARCore 1.57.0 (api in core-ar); Filament 1.77.3 (core-ar, unused so far);
-  ML Kit pose-detection 17.0.0 (person height); Room 2.8.5 + KSP 2.3.13 (data);
-  kotlinx-coroutines-android 1.10.2 (StateFlow in core-ar).
-- Hit-test: core-measure geometry/ + hit/; core-ar HitTestService. Weights/thresholds are guesses: tune after T07.
-- Spike points are plain Vec3, not anchors (drift); confidence shown as raw number, no badge label yet.
-- Engine: core-measure model/Path.kt, session/MeasurementSession.kt. Wire: listener -> StateFlow; endMove() on drag end; updatePoints(anchors) per frame; after undo/remove re-sync anchors.
-- Confidence: core-measure confidence/ConfidenceScorer.score(...) -> level/score/reason; map ARCore TrackingState to TrackingStatus in core-ar; hide number when !canDisplayNumber. Tunable: PLANE_HIGH_MIN_CONFIDENCE (0.9).
-- Units: core-measure units/LengthFormatter.format(m, UnitSystem), defaultSystemForRegion(country), UnitSystem.toggled().
-- Settings: app/settings/SettingsRepository (SharedPreferences); haptics/sound/analytics toggles stored but not wired yet. Eyeball hand-drawn icons on device.
-- Crash reporting is local-only (filesDir/crashes, last 5), gated by analytics opt-out; no third-party SDK.
+- Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
+- Versions: Gradle 9.9.1, AGP 9.5.1, Kotlin 2.4.21, Compose BOM 2026.09.00. core-measure pins Kotlin jvmTarget 17.
+- Deps (reasons): ARCore 1.57.0 (api in core-ar); Filament 1.77.3 (core-ar, unused so far); ML Kit pose-detection
+  17.0.0 (person height); Room 2.8.5 + KSP 2.3.13 (data); kotlinx-coroutines-android 1.10.2 (StateFlow in core-ar).
+- core-measure: geometry/, hit/ (DepthHitTester, HitResolver), model/Path, session/MeasurementSession (wire: listener->
+  StateFlow, endMove(), updatePoints per frame), confidence/ConfidenceScorer (hide number when !canDisplayNumber),
+  units/LengthFormatter, level/LevelMath. core-ar: HitTestService, ArCameraView (onFrame on GL thread).
+- Tunables guessed, need phone tuning: hit-test weights, PLANE_HIGH_MIN_CONFIDENCE (0.9).
+- Spike points are plain Vec3 (no anchors). Settings haptics/sound wired only in Level; analytics opt-out also
+  gates local-only crash logs (filesDir/crashes). Hand-drawn icons: eyeball on device.

@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.openmeasure.level.LevelScreen
 import app.openmeasure.settings.SettingsRepository
 import app.openmeasure.settings.SettingsScreen
 
@@ -89,20 +90,16 @@ fun AppRoot(settingsRepository: SettingsRepository) {
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             when (selected) {
                 MainTab.MEASURE -> ArScreen()
-                MainTab.LEVEL, MainTab.HEIGHT -> Placeholder(selected)
+                MainTab.LEVEL -> LevelScreen(settingsRepository)
+                MainTab.HEIGHT -> Placeholder()
             }
         }
     }
 }
 
 @Composable
-private fun Placeholder(tab: MainTab) {
+private fun Placeholder() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        val text = if (tab == MainTab.LEVEL) {
-            stringResource(R.string.level_coming_soon)
-        } else {
-            stringResource(R.string.height_depth_note)
-        }
-        Text(text = text, style = MaterialTheme.typography.bodyLarge)
+        Text(text = stringResource(R.string.height_depth_note), style = MaterialTheme.typography.bodyLarge)
     }
 }

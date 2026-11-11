@@ -5,7 +5,10 @@
     <string name="tab_measure">Measure</string>
     <string name="tab_level">Level</string>
     <string name="tab_height">Height</string>
-    <string name="level_coming_soon">Level tool coming soon</string>
+    <string name="level_mode_flat">Flat surface</string>
+    <string name="level_mode_edge">Edge (phone on its side)</string>
+    <string name="level_no_sensor">No orientation sensor available on this device</string>
+    <string name="level_hint">Place the phone flat or on its edge against the surface</string>
     <string name="height_depth_note">Depth-capable phones only</string>
     <string name="open_settings">Open settings</string>
     <string name="back">Back</string>
