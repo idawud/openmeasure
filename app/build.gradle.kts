@@ -46,7 +46,6 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
-    implementation(libs.mlkit.pose.detection)
     implementation(project(":core-ar"))
     implementation(project(":core-measure"))
     implementation(project(":data"))

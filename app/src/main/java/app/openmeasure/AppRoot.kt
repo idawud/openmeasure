@@ -19,6 +19,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -28,15 +31,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.openmeasure.ar.ArSessionManager
 import app.openmeasure.level.LevelScreen
 import app.openmeasure.settings.SettingsRepository
 import app.openmeasure.settings.SettingsScreen
 
-/** Bottom tabs. Only [MEASURE] is live; the others are placeholders or disabled. */
-enum class MainTab(val labelRes: Int, val icon: ImageVector, val enabled: Boolean) {
-    MEASURE(R.string.tab_measure, AppIcons.Measure, enabled = true),
-    LEVEL(R.string.tab_level, AppIcons.Level, enabled = true),
-    HEIGHT(R.string.tab_height, AppIcons.Height, enabled = false),
+/** Bottom tabs. [HEIGHT] is enabled only once the shared AR session reports depth support. */
+enum class MainTab(val labelRes: Int, val icon: ImageVector) {
+    MEASURE(R.string.tab_measure, AppIcons.Measure),
+    LEVEL(R.string.tab_level, AppIcons.Level),
+    HEIGHT(R.string.tab_height, AppIcons.Height);
+
+    fun enabled(depthSupported: Boolean) = this != HEIGHT || depthSupported
 }
 
 /** Top-level navigation: tab switcher plus a gear icon that opens Settings. */
@@ -46,6 +52,11 @@ fun AppRoot(settingsRepository: SettingsRepository) {
     if (!settingsRepository.settings.accuracyDisclaimerAccepted) {
         AccuracyDisclaimerDialog(onAccept = settingsRepository::acceptAccuracyDisclaimer)
     }
+    // One AR session for the whole app (Measure + Height); screens pause it, this closes it.
+    val arManager = remember { ArSessionManager() }
+    DisposableEffect(arManager) { onDispose { arManager.close() } }
+    val depthSupported by arManager.depthSupported.collectAsState()
+    // Remembered above the Settings early return so the session and depth flag survive opening Settings.
     var showSettings by rememberSaveable { mutableStateOf(false) }
     if (showSettings) {
         SettingsScreen(repository = settingsRepository, onBack = { showSettings = false })
@@ -55,7 +66,7 @@ fun AppRoot(settingsRepository: SettingsRepository) {
     var selected by rememberSaveable { mutableStateOf(MainTab.MEASURE) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 600.dp
-        AppScaffold(settingsRepository, wide, selected, { selected = it }, { showSettings = true })
+        AppScaffold(settingsRepository, arManager, depthSupported, wide, selected, { selected = it }, { showSettings = true })
     }
 }
 
@@ -63,6 +74,8 @@ fun AppRoot(settingsRepository: SettingsRepository) {
 @Composable
 private fun AppScaffold(
     settingsRepository: SettingsRepository,
+    arManager: ArSessionManager,
+    depthSupported: Boolean,
     wide: Boolean,
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
@@ -84,7 +97,7 @@ private fun AppScaffold(
         },
         bottomBar = {
             if (!wide) Column {
-                Text(
+                if (!depthSupported) Text(
                     text = stringResource(R.string.height_depth_note),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -96,7 +109,7 @@ private fun AppScaffold(
                     MainTab.entries.forEach { tab ->
                         NavigationBarItem(
                             selected = selected == tab,
-                            enabled = tab.enabled,
+                            enabled = tab.enabled(depthSupported),
                             onClick = { onSelect(tab) },
                             icon = { Icon(tab.icon, contentDescription = null) },
                             label = { Text(stringResource(tab.labelRes)) },
@@ -112,7 +125,7 @@ private fun AppScaffold(
                     MainTab.entries.forEach { tab ->
                         NavigationRailItem(
                             selected = selected == tab,
-                            enabled = tab.enabled,
+                            enabled = tab.enabled(depthSupported),
                             onClick = { onSelect(tab) },
                             icon = { Icon(tab.icon, contentDescription = null) },
                             label = { Text(stringResource(tab.labelRes)) },
@@ -122,9 +135,9 @@ private fun AppScaffold(
             }
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                 when (selected) {
-                    MainTab.MEASURE -> ArScreen(settingsRepository)
+                    MainTab.MEASURE -> ArScreen(settingsRepository, arManager)
                     MainTab.LEVEL -> LevelScreen(settingsRepository)
-                    MainTab.HEIGHT -> Placeholder()
+                    MainTab.HEIGHT -> if (depthSupported) ArScreen(settingsRepository, arManager, heightMode = true) else Placeholder()
                 }
             }
         }

@@ -28,8 +28,11 @@ class ArSessionManager {
     var session: Session? = null
         private set
 
-    var isDepthSupported: Boolean = false
-        private set
+    private val _depthSupported = MutableStateFlow(false)
+    /** Known after the first session is created; gates the Height tab (F10). */
+    val depthSupported: StateFlow<Boolean> = _depthSupported.asStateFlow()
+
+    val isDepthSupported: Boolean get() = _depthSupported.value
 
     private var installRequested = false
     private var cameraGranted = false
@@ -76,7 +79,7 @@ class ArSessionManager {
     }
 
     private fun configure(s: Session) {
-        isDepthSupported = s.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
+        _depthSupported.value = s.isDepthModeSupported(Config.DepthMode.AUTOMATIC)
         s.configure(
             s.config.apply {
                 planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL

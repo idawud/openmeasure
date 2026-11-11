@@ -37,12 +37,14 @@ fun rememberCameraPermissionRequester(manager: ArSessionManager, onResult: (Bool
     return { launcher.launch(Manifest.permission.CAMERA) }
 }
 
-/** Shows AR session state as text only (camera rendering arrives in T05). */
+/**
+ * Camera view over the single shared AR session [manager] (owned by AppRoot, so Measure and Height reuse it).
+ * Leaving the screen pauses the session; AppRoot closes it. [heightMode] shows the F10 height overlay instead of measuring.
+ */
 @Composable
-fun ArScreen(settingsRepository: SettingsRepository) {
+fun ArScreen(settingsRepository: SettingsRepository, manager: ArSessionManager, heightMode: Boolean = false) {
     val context = LocalContext.current
     val activity = context as Activity
-    val manager = remember { ArSessionManager() }
     val state by manager.state.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -67,7 +69,7 @@ fun ArScreen(settingsRepository: SettingsRepository) {
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            manager.close()
+            manager.onPause()
         }
     }
 
@@ -85,7 +87,10 @@ fun ArScreen(settingsRepository: SettingsRepository) {
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        if (state == ArSessionState.Running) {
+        if (state == ArSessionState.Running && heightMode) {
+            AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
+            HeightOverlay(cameraView, manager, settingsRepository)
+        } else if (state == ArSessionState.Running) {
             val measure = remember { MeasureController(cameraView, manager) }
             DisposableEffect(measure) { measure.attach(); onDispose { measure.detach() } }
             AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
