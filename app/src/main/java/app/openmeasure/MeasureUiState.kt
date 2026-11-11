@@ -56,6 +56,10 @@ data class MeasureUiState(
     val boxMode: Boolean = false,
     /** Box step, wireframe and volume label; non-null in box mode. */
     val box: BoxUi? = null,
+    /** F15: room (floor plan) mode. */
+    val roomMode: Boolean = false,
+    /** Room step, live preview plan and closed result; non-null in room mode. */
+    val room: RoomUi? = null,
     /** Area label + warnings once 4 corners exist in rectangle mode. */
     val rect: RectUi? = null,
     /** Increments each time auto-detect finds nothing; the UI shows the manual-corners hint. */

@@ -20,10 +20,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Point-to-point, rectangle, angle and box controller (F1/F3/F4/F9/F14/F16). Runs on the GL thread via [ArCameraView.onFrame]; each placed point is
+ * Point-to-point, rectangle, angle, box and room controller (F1/F3/F4/F9/F14/F15/F16). Runs on the GL thread via [ArCameraView.onFrame]; each placed point is
  * backed by an ARCore anchor ([AnchorStore]) whose pose is fed into [MeasurementSession.updatePoints] every frame.
  * UI-thread calls (drag, undo, remove) are queued and applied at the start of the next frame.
- * Mode-specific logic lives in separate classes ([RectModeController], [BoxModeController], [DragController]); add new modes the same way.
+ * Mode-specific logic lives in separate classes ([RectModeController], [BoxModeController], [RoomModeController], [DragController]).
  */
 class MeasureController(private val view: ArCameraView, private val manager: ArSessionManager) {
     private val service = HitTestService()
@@ -34,6 +34,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private val rect = RectModeController(manager, session, anchors, service, ::clearAll)
     private val angle = AngleModeController()
     private val box = BoxModeController()
+    private val room = RoomModeController()
     private val commands = ConcurrentLinkedQueue<() -> Unit>()
 
     /** Settings "Snap to edges"; read on the GL thread every frame. */
@@ -72,18 +73,24 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     /** Finish the current path (keeps it on screen); the next point starts a new one. */
     fun done() { pendingDone.set(true) }
     /** F9: switch between line and rectangle mode (clears the current measurement, undoable). */
-    fun setRectMode(on: Boolean) = setMode(on, false, false)
-    /** F16: switch angle mode on/off (clears the measurement; rectangle, angle and box are mutually exclusive). */
-    fun setAngleMode(on: Boolean) = setMode(false, on, false)
+    fun setRectMode(on: Boolean) = setMode(on, false, false, false)
+    /** F16: switch angle mode on/off (clears the measurement; rectangle, angle, box and room are mutually exclusive). */
+    fun setAngleMode(on: Boolean) = setMode(false, on, false, false)
     /** F14: switch box (volume) mode on/off. */
-    fun setBoxMode(on: Boolean) = setMode(false, false, on)
-    private fun setMode(rectOn: Boolean, angleOn: Boolean, boxOn: Boolean) {
+    fun setBoxMode(on: Boolean) = setMode(false, false, on, false)
+    /** F15: switch room (floor plan) mode on/off. */
+    fun setRoomMode(on: Boolean) = setMode(false, false, false, on)
+    private fun setMode(rectOn: Boolean, angleOn: Boolean, boxOn: Boolean, roomOn: Boolean) {
         commands += {
-            if (rect.active != rectOn || angle.active != angleOn || box.active != boxOn) {
-                rect.active = rectOn; angle.active = angleOn; box.active = boxOn; clearAll()
+            if (rect.active != rectOn || angle.active != angleOn || box.active != boxOn || room.active != roomOn) {
+                rect.active = rectOn; angle.active = angleOn; box.active = boxOn; room.active = roomOn; clearAll()
             }
         }
     }
+    /** F15: close the floor polygon (>= 3 corners); the next step is the optional ceiling point. */
+    fun closeRoom() { commands += { room.close(session.state.points.size) } }
+    /** F15: finish without a ceiling height. */
+    fun skipCeiling() { commands += { room.skipCeiling() } }
     /** F9: auto-detect a rectangle at the reticle on the next frame; failure bumps [MeasureUiState.detectFailTick]. */
     fun detect() { pendingDetect.set(true) }
 
@@ -104,13 +111,18 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     }
 
     fun undo() {
-        commands += { drag.finish(commit = false); session.undo(); finished = false; anchors.sync() }
+        commands += {
+            drag.finish(commit = false)
+            if (!room.active || !room.undo(session.state.points.size)) session.undo()
+            finished = false; anchors.sync()
+        }
     }
 
     private fun clearAll() {
         drag.cancel()
         session.clear()
         anchors.sync()
+        room.reset()
         finished = false
     }
 
@@ -135,7 +147,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val fv = FrameView(viewM, projM, w, h, camPos, status)
         // F12: when aligned, the live end becomes its level/plumb projection so lengths are the true horizontal/vertical distance.
         val boxDone = box.active && session.state.points.size >= BoxModeController.POINTS
-        val start = if (rect.active || angle.active || finished || boxDone) null else session.state.points.lastOrNull()?.position
+        val start = if (rect.active || angle.active || room.active || finished || boxDone) null else session.state.points.lastOrNull()?.position
         val g = guide.update(start, live.position, guideEnabled && status == TrackingStatus.TRACKING, fv)
         lockedEnd = if (g != null && g.locked) g.end else null
         lockedEnd?.let { live = live.copy(position = it) }
@@ -154,13 +166,15 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val observe = { i: Int -> anchors.observe(i, camPos) }
         val angleDone = angle.active && pts.size >= AngleModeController.POINTS
         val boxFrame = if (box.active) box.build(pts, live, observe, fv) else null
+        val roomFrame = if (room.active) room.build(pts, live, observe, fv) else null
         val built = boxFrame?.let { FrameSegments(it.segments, emptyList()) }
+            ?: roomFrame?.let { FrameSegments(it.segments, emptyList()) }
             ?: MeasureFrame.build(pts, finished || angleDone, rect.active, live, rulerUnits, observe, fv)
         val dragging = drag.draggingId != null
         _state.value = MeasureUiState(
-            coaching, dots, pts.map { it.id }, built.segments, if (angle.active || box.active) null else PathTotal.of(built.placed), pts.size, finished,
+            coaching, dots, pts.map { it.id }, built.segments, if (angle.active || box.active || room.active) null else PathTotal.of(built.placed), pts.size, finished,
             canAdd = rect.active || angle.active || box.active || pts.size < PathTotal.MAX_POINTS,
-            canUndo = session.state.canUndo,
+            canUndo = session.state.canUndo || (room.active && room.canUndo),
             draggingId = drag.draggingId,
             snapKind = if (dragging) drag.snapKind else liveSnap.kind,
             snapPoint = if (dragging) drag.snapPoint else liveSnap.screen,
@@ -172,9 +186,11 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             angle = angle.build(pts, observe, fv),
             boxMode = box.active,
             box = boxFrame?.ui,
+            roomMode = room.active,
+            room = roomFrame?.ui,
             rect = built.rect,
             detectFailTick = rect.failTick,
-            save = if (status == TrackingStatus.TRACKING && !angle.active) SaveCandidate.of(rect.active, finished, built.placed, built.rect, pts, boxFrame?.ui) else null,
+            save = if (status == TrackingStatus.TRACKING && !angle.active) SaveCandidate.of(rect.active, finished, built.placed, built.rect, pts, boxFrame?.ui, roomFrame?.ui) else null,
         )
     }
 
@@ -184,6 +200,11 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         if (finished || (rect.active && session.state.points.size >= MeasureFrame.RECT_CORNERS) ||
             (angle.active && session.state.points.size >= AngleModeController.POINTS) ||
             (box.active && session.state.points.size >= BoxModeController.POINTS)) clearAll()
+        if (room.active) when (room.placeAction(session.state.points, pos)) {
+            RoomModeController.PlaceAction.CLOSE -> { room.close(session.state.points.size); return }
+            RoomModeController.PlaceAction.NEW_ROOM -> clearAll()
+            RoomModeController.PlaceAction.ADD -> Unit
+        }
         if (session.state.points.size >= PathTotal.MAX_POINTS) return
         val anchor = (if (aligned != null) anchors.createAt(pos) else hit.createAnchor(sess)) ?: return
         val id = session.addPoint(pos, hit.result.confidence)

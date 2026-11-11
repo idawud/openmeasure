@@ -49,6 +49,7 @@ internal fun DetailDialog(
                     Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium,
                 )
                 boxDimsText(item, units)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+                if (item.kind == app.openmeasure.data.MeasurementKind.ROOM) RoomHistoryDetail(item, units)
                 Text(dateText(item.createdAtMillis), style = MaterialTheme.typography.bodySmall)
                 if (item.points.isNotEmpty()) {
                     Text(stringResource(R.string.history_points, item.points.size), style = MaterialTheme.typography.bodySmall)

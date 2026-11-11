@@ -19,6 +19,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +76,13 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     val snackbar = remember { SnackbarHostState() }
+    // F15: the floor plan opens automatically when the room is done, as a snapshot (stable while tracking changes).
+    var planOpen by rememberSaveable { mutableStateOf(false) }
+    var planSnapshot by remember { mutableStateOf<RoomResult?>(null) }
+    val roomDone = s.room?.step == RoomStep.DONE
+    LaunchedEffect(roomDone) {
+        if (roomDone) { planSnapshot = stateHolder.value.room?.result; planOpen = planSnapshot != null } else planOpen = false
+    }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         Box(
             Modifier.fillMaxSize().drawWithContent {
@@ -88,6 +98,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             val line = Color(0xFFFFEB3B)
             s.guide?.let { drawGuides(it) }
             s.box?.let { drawBoxEdges(it) }
+            s.room?.let { drawRoomEdges(it) }
             s.segments.forEach { su ->
                 val it = su.segment ?: return@forEach
                 drawLine(
@@ -135,6 +146,10 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 72.dp))
         s.box?.let { BoxStepHint(it.step, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp, start = 16.dp, end = 16.dp)) }
+        s.room?.let { RoomStepHint(it, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp, start = 16.dp, end = 16.dp)) }
+        s.room?.takeIf { it.preview != null }?.let {
+            RoomMiniPlan(it, settings.unitSystem, Modifier.align(Alignment.TopStart).windowInsetsPadding(WindowInsets.safeDrawing).padding(start = 8.dp, top = 96.dp))
+        }
         DetectFailHint(s.detectFailTick, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp))
         s.guide?.takeIf { ready }?.let {
             GuideChip(it.state, Modifier.align(Alignment.Center).padding(top = 72.dp))
@@ -160,14 +175,19 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     snackbar, Modifier.padding(bottom = if (short) 4.dp else 8.dp), photo = cameraView to layer,
                 ) { uri -> cand.toItem(uri, System.currentTimeMillis()) }
             }
-            RectModeBar(s.rectMode, s.angleMode, s.boxMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
-            val placeDesc = stringResource(if (s.rectMode) R.string.measure_place_corner_desc else R.string.measure_place_point_desc)
+            s.room?.let { RoomActions(it, controller, onViewPlan = { planSnapshot = it.result; planOpen = true }, Modifier.padding(bottom = 8.dp)) }
+            RectModeBar(s.rectMode, s.angleMode, s.boxMode, s.roomMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
+            val ceilingStep = s.room?.step == RoomStep.CEILING
+            val cornerMode = s.rectMode || (s.roomMode && s.room?.step == RoomStep.CORNERS)
+            val placeDesc = stringResource(
+                if (ceilingStep) R.string.room_place_ceiling_desc else if (cornerMode) R.string.measure_place_corner_desc else R.string.measure_place_point_desc,
+            )
             val placeButton: @Composable () -> Unit = {
                 Button(
                     onClick = { controller.place() },
                     enabled = ready && s.canAdd,
                     modifier = Modifier.semantics { contentDescription = placeDesc },
-                ) { Text(stringResource(if (s.rectMode) R.string.measure_place_corner else R.string.measure_place_point)) }
+                ) { Text(stringResource(if (ceilingStep) R.string.room_place_ceiling else if (cornerMode) R.string.measure_place_corner else R.string.measure_place_point)) }
             }
             if (!short) placeButton()
             Row(horizontalArrangement = Arrangement.spacedBy(if (narrow) 6.dp else 12.dp)) {
@@ -178,7 +198,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     enabled = s.canUndo,
                     modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = undoDesc },
                 ) { Text(stringResource(R.string.measure_undo)) }
-                if (s.pointCount > 0 && !s.rectMode && !s.angleMode && !s.boxMode) {
+                if (s.pointCount > 0 && !s.rectMode && !s.angleMode && !s.boxMode && !s.roomMode) {
                     // "Done" ends the current path; afterwards the same button reads "New" (next point starts fresh).
                     Button(
                         onClick = { if (s.finished) controller.reset() else controller.done() },
@@ -192,6 +212,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 }
             }
         }
+        planSnapshot?.takeIf { planOpen }?.let { RoomPlanScreen(it, settings.unitSystem) { planOpen = false } }
     }
 }
 

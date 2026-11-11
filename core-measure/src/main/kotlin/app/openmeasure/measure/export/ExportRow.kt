@@ -5,9 +5,9 @@ import app.openmeasure.measure.units.LengthFormatter
 import app.openmeasure.measure.units.UnitSystem
 import app.openmeasure.measure.units.VolumeFormatter
 
-enum class ExportKind { LINE_PATH, RECTANGLE, HEIGHT, BOX }
+enum class ExportKind { LINE_PATH, RECTANGLE, HEIGHT, BOX, ROOM }
 
-/** Plain export record (decoupled from the Room type). [valueSi] is metres, m² for RECTANGLE, m³ for BOX. */
+/** Plain export record (decoupled from the Room type). [valueSi] is metres, m² for RECTANGLE and ROOM (floor area), m³ for BOX. */
 data class ExportRow(
     val createdAtMillis: Long,
     val kind: ExportKind,
@@ -16,14 +16,14 @@ data class ExportRow(
     val note: String?,
 ) {
     val siUnit: String get() = when (kind) {
-        ExportKind.RECTANGLE -> "m2"
+        ExportKind.RECTANGLE, ExportKind.ROOM -> "m2"
         ExportKind.BOX -> "m3"
         else -> "m"
     }
 
     fun displayValue(system: UnitSystem): String = when {
         valueSi == null -> "—"
-        kind == ExportKind.RECTANGLE -> AreaFormatter.format(valueSi, system)
+        kind == ExportKind.RECTANGLE || kind == ExportKind.ROOM -> AreaFormatter.format(valueSi, system)
         kind == ExportKind.BOX -> VolumeFormatter.format(valueSi, system)
         else -> LengthFormatter.format(valueSi, system)
     }

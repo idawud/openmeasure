@@ -43,6 +43,6 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 ## Phase 3 — Later (P2)
 
 - [x] T29 [opus] Box volume (F14).
-- [ ] T30 [opus] Room scan to floor plan (F15).
+- [x] T30 [opus] Room scan to floor plan (F15).
 - [x] T31 [sonnet] Angle tool (F16).
 - [x] T32 [haiku] Export CSV/PDF (F17).

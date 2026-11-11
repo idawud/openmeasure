@@ -25,6 +25,11 @@ class CsvExporterTest {
         assertTrue(csv.contains(",BOX,0.024,m3,0.024 m³,MEDIUM,\r\n"))
     }
 
+    @Test fun roomArea() {
+        val csv = CsvExporter.toCsv(listOf(ExportRow(0L, ExportKind.ROOM, 14.2, "MEDIUM", null)), UnitSystem.METRIC)
+        assertTrue(csv.contains(",ROOM,14.2,m2,14.20 m²,MEDIUM,\r\n"))
+    }
+
     @Test fun nullValueIsEmptySi() {
         val csv = CsvExporter.toCsv(listOf(ExportRow(0L, ExportKind.HEIGHT, null, "HIGH", null)), UnitSystem.METRIC)
         assertTrue(csv.contains(",HEIGHT,,m,—,HIGH,"))

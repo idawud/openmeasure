@@ -61,6 +61,9 @@ object AppIcons {
         icon("Box", "M12,2l9,5v10l-9,5l-9,-5v-10z M12,4.3l6.9,3.7l-6.9,3.7l-6.9,-3.7z M5,9.7l6,3.3v6.6l-6,-3.3z M13,13l6,-3.3v6.6l-6,3.3z")
     }
 
+    /** Floor plan outline with an inner wall: Room history entries (F15). */
+    val Room: ImageVector by lazy { icon("Room", "M3,3h18v18h-18z M5,5h14v14h-14z M11,5h2v8h-2z M13,11h4v2h-4z") }
+
     private fun icon(name: String, pathData: String): ImageVector =
         ImageVector.Builder(
             name = name,

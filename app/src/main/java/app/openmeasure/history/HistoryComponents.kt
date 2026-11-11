@@ -56,6 +56,7 @@ internal fun valueText(item: HistoryItem, units: UnitSystem): String = when (ite
     MeasurementKind.RECTANGLE -> item.areaSquareMeters?.let { AreaFormatter.format(it, units) }
     MeasurementKind.HEIGHT -> item.heightMeters?.let { LengthFormatter.format(it, units) }
     MeasurementKind.BOX -> item.volumeCubicMeters?.let { VolumeFormatter.format(it, units) }
+    MeasurementKind.ROOM -> item.areaSquareMeters?.let { AreaFormatter.format(it, units) }
 } ?: "—"
 
 /** "W 60 cm × D 40 cm × H 25 cm" for a BOX saved with its 4 tapped points (A, B, C, top); else null. */
@@ -77,6 +78,7 @@ internal fun kindLabel(kind: MeasurementKind): String = stringResource(
         MeasurementKind.RECTANGLE -> R.string.history_kind_rect
         MeasurementKind.HEIGHT -> R.string.history_kind_height
         MeasurementKind.BOX -> R.string.history_kind_box
+        MeasurementKind.ROOM -> R.string.history_kind_room
     },
 )
 
@@ -94,6 +96,7 @@ internal fun kindIcon(kind: MeasurementKind) = when (kind) {
     MeasurementKind.RECTANGLE -> AppIcons.Rectangle
     MeasurementKind.HEIGHT -> AppIcons.Height
     MeasurementKind.BOX -> AppIcons.Box
+    MeasurementKind.ROOM -> AppIcons.Room
 }
 
 @Composable

@@ -3,8 +3,11 @@ package app.openmeasure.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/** What was measured. Stored by name so reordering the enum never corrupts old rows. */
-enum class MeasurementKind { LINE_PATH, RECTANGLE, HEIGHT, BOX }
+/**
+ * What was measured. Stored by name so reordering the enum never corrupts old rows.
+ * ROOM (F15): floor corners in tap order in pointsJson, area, perimeter as totalLength, ceiling as height, volume.
+ */
+enum class MeasurementKind { LINE_PATH, RECTANGLE, HEIGHT, BOX, ROOM }
 
 @Entity(tableName = "measurements")
 data class MeasurementEntity(

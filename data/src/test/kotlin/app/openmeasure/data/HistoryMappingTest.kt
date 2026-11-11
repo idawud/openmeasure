@@ -39,6 +39,17 @@ class HistoryMappingTest {
         assertEquals(item, e.toItem())
     }
 
+    @Test fun roomRoundTripNoSchemaChange() {
+        val item = HistoryItem(
+            createdAtMillis = 9L, kind = MeasurementKind.ROOM, totalLengthMeters = 14.0, areaSquareMeters = 12.0,
+            heightMeters = 2.5, volumeCubicMeters = 30.0, confidenceLevel = "MEDIUM",
+            points = List(5) { WorldPoint(it.toFloat(), -1.4f, -it.toFloat()) },
+        )
+        val e = item.toEntity()
+        assertEquals("ROOM", e.kind)
+        assertEquals(item, e.toItem())
+    }
+
     @Test fun migrationAddsNullableVolumeColumn() {
         assertEquals("ALTER TABLE `measurements` ADD COLUMN `volumeCubicMeters` REAL", AppDatabase.SQL_1_2)
         assertEquals(1, AppDatabase.MIGRATION_1_2.startVersion)

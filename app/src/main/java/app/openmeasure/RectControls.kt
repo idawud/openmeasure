@@ -37,9 +37,9 @@ import app.openmeasure.measure.units.UnitSystem
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
-/** F9/F14/F16: Line / Rectangle / Angle / Box mode chips, plus "Detect" (auto-detect at the reticle) in rectangle mode. */
+/** F9/F14/F15/F16: Line / Rectangle / Angle / Box / Room mode chips, plus "Detect" (auto-detect at the reticle) in rectangle mode. */
 @Composable
-fun RectModeBar(rectMode: Boolean, angleMode: Boolean, boxMode: Boolean, ready: Boolean, controller: MeasureController, modifier: Modifier = Modifier) {
+fun RectModeBar(rectMode: Boolean, angleMode: Boolean, boxMode: Boolean, roomMode: Boolean, ready: Boolean, controller: MeasureController, modifier: Modifier = Modifier) {
     val modeDesc = stringResource(R.string.measure_mode_desc)
     Row(
         // Scrolls horizontally when four chips (+ Detect) do not fit a narrow window.
@@ -48,7 +48,7 @@ fun RectModeBar(rectMode: Boolean, angleMode: Boolean, boxMode: Boolean, ready: 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         FilterChip(
-            selected = !rectMode && !angleMode && !boxMode, onClick = { controller.setRectMode(false) },
+            selected = !rectMode && !angleMode && !boxMode && !roomMode, onClick = { controller.setRectMode(false) },
             label = { Text(stringResource(R.string.measure_mode_line)) }, modifier = Modifier.heightIn(min = 48.dp),
         )
         FilterChip(
@@ -62,6 +62,10 @@ fun RectModeBar(rectMode: Boolean, angleMode: Boolean, boxMode: Boolean, ready: 
         FilterChip(
             selected = boxMode, onClick = { controller.setBoxMode(true) },
             label = { Text(stringResource(R.string.measure_mode_box)) }, modifier = Modifier.heightIn(min = 48.dp),
+        )
+        FilterChip(
+            selected = roomMode, onClick = { controller.setRoomMode(true) },
+            label = { Text(stringResource(R.string.measure_mode_room)) }, modifier = Modifier.heightIn(min = 48.dp),
         )
         if (rectMode) {
             val detectDesc = stringResource(R.string.measure_detect_desc)

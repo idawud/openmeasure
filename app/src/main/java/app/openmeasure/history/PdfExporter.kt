@@ -23,7 +23,7 @@ internal object PdfExporter {
         val thumbs: List<Bitmap?> = items.map { it.photoUri?.let { u -> loadThumb(context, Uri.parse(u), 160) } }
         val inputs = items.mapIndexed { i, item ->
             PdfRowInput(
-                title = listOfNotNull(valueText(item, units), boxDimsText(item, units), context.getString(kindRes(item.kind)))
+                title = listOfNotNull(valueText(item, units), boxDimsText(item, units), roomDimsText(context, item, units), context.getString(kindRes(item.kind)))
                     .joinToString(" · "),
                 detail = "${context.getString(R.string.history_confidence, context.getString(confidenceRes(item.confidenceLevel)))} · ${dateText(item.createdAtMillis)}",
                 note = item.note,
@@ -74,6 +74,7 @@ internal fun kindRes(kind: app.openmeasure.data.MeasurementKind) = when (kind) {
     app.openmeasure.data.MeasurementKind.RECTANGLE -> R.string.history_kind_rect
     app.openmeasure.data.MeasurementKind.HEIGHT -> R.string.history_kind_height
     app.openmeasure.data.MeasurementKind.BOX -> R.string.history_kind_box
+    app.openmeasure.data.MeasurementKind.ROOM -> R.string.history_kind_room
 }
 
 internal fun confidenceRes(level: String) = when (level) {

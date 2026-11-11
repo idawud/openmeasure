@@ -26,12 +26,14 @@ internal object ExportActions {
             MeasurementKind.RECTANGLE -> ExportKind.RECTANGLE
             MeasurementKind.HEIGHT -> ExportKind.HEIGHT
             MeasurementKind.BOX -> ExportKind.BOX
+            MeasurementKind.ROOM -> ExportKind.ROOM
         },
         when (item.kind) {
             MeasurementKind.LINE_PATH -> item.totalLengthMeters
             MeasurementKind.RECTANGLE -> item.areaSquareMeters
             MeasurementKind.HEIGHT -> item.heightMeters
             MeasurementKind.BOX -> item.volumeCubicMeters
+            MeasurementKind.ROOM -> item.areaSquareMeters
         },
         item.confidenceLevel,
         item.note,
@@ -83,12 +85,13 @@ internal object ExportActions {
         }
     }
 
-    private fun newFile(context: Context, ext: String): File {
+    /** New file in the export cache (older exports are deleted). */
+    fun newFile(context: Context, ext: String, prefix: String = "openmeasure-history"): File {
         val dir = File(context.cacheDir, DIR).apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() } // keep only the latest export
-        return File(dir, "openmeasure-history-${System.currentTimeMillis()}.$ext")
+        return File(dir, "$prefix-${System.currentTimeMillis()}.$ext")
     }
 
-    private fun uriFor(context: Context, file: File): Uri =
+    fun uriFor(context: Context, file: File): Uri =
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
 }

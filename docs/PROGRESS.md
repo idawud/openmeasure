@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T29 (box volume; Room DB now v2 with MIGRATION_1_2 volume column). Done: T01-T06, T08-T21, T23-T29, T31, T32. Open: T07, T22 (phone); T30 (opus) in progress.
+Last committed task: T30 (room scan, no DB bump). ALL tasks T01-T32 built except T07 + T22 (need phone). Next: full test+lint recheck, then phone tests.
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step
@@ -28,6 +28,7 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   12. T31 angle: A,V,B + arc + label; 90 deg corner ~90.0; arc takes smaller sweep near 180; drag/undo update; mode switch clears.
   13. T32 export: share CSV into spreadsheet, PDF into viewer (A4, multipage, thumbnails, missing photo ok); item share with/without photo.
   14. T29 box: W,D,H each <=1 cm on a known carton, all sides, H label placement, v1->v2 upgrade keeps history; not-level flag = spread > max(3 cm, 3%).
+  15. T30 room: known room <=1 cm per 1 m wall; mini plan placement on narrow phones; plan screen rotate/split; SVG/PDF open in share targets; TalkBack summary.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
