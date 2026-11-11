@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T27 (guide lines). Done: T01-T06, T08-T21, T23-T27. Open: T07, T22 (need phone).
+Last committed task: T28 (ruler ticks). Done: T01-T06, T08-T21, T23-T28. Open: T07, T22 (need phone). MeasureController.kt at 297 lines: refactor before growing.
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step
@@ -24,6 +24,7 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   8. T25 height: skeleton aligned; stable readout (stableSpreadM may need raising); tape check 2/3/4 m (+-1.5 cm).
   9. T26 history: save line/rect/height, unit switch re-formats, note edit, delete+Undo, clear all.
   10. T27 guides: Level/Plumb chip, lock at 2 deg (release 4), placed point exactly level/plumb, chip not overlapping.
+  11. T28 ruler ticks: appear on approach, thin out with distance, upright labels, none when confidence poor, toggle works, metric+imperial.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).

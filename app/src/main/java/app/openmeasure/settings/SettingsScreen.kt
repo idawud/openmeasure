@@ -83,6 +83,12 @@ fun SettingsScreen(repository: SettingsRepository, onBack: () -> Unit) {
                 checked = settings.guideEnabled,
                 onCheckedChange = repository::setGuideEnabled,
             )
+            ToggleRow(
+                title = stringResource(R.string.settings_ruler),
+                description = stringResource(R.string.settings_ruler_desc),
+                checked = settings.rulerEnabled,
+                onCheckedChange = repository::setRulerEnabled,
+            )
 
             SectionHeader(stringResource(R.string.settings_feedback))
             ToggleRow(

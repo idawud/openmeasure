@@ -38,7 +38,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T25 [opus] Person height (F10): ML Kit pose + depth floor distance; depth-capable phones only.
 - [x] T26 [sonnet] Measurement history (F11): Room entities, list screen, notes, delete.
 - [x] T27 [sonnet] Vertical/horizontal guide lines (F12).
-- [ ] T28 [sonnet] Ruler view ticks (F13).
+- [x] T28 [sonnet] Ruler view ticks (F13).
 
 ## Phase 3 — Later (P2)
 

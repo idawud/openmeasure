@@ -18,6 +18,7 @@ data class AppSettings(
     val accuracyDisclaimerAccepted: Boolean,
     val snapEnabled: Boolean = true,
     val guideEnabled: Boolean = true,
+    val rulerEnabled: Boolean = true,
 )
 
 /**
@@ -43,6 +44,8 @@ class SettingsRepository(context: Context) {
 
     fun setGuideEnabled(enabled: Boolean) = save(settings.copy(guideEnabled = enabled))
 
+    fun setRulerEnabled(enabled: Boolean) = save(settings.copy(rulerEnabled = enabled))
+
     fun acceptAccuracyDisclaimer() = save(settings.copy(accuracyDisclaimerAccepted = true))
 
     private fun load(): AppSettings = AppSettings(
@@ -55,6 +58,7 @@ class SettingsRepository(context: Context) {
         accuracyDisclaimerAccepted = prefs.getBoolean(KEY_DISCLAIMER_ACCEPTED, false),
         snapEnabled = prefs.getBoolean(KEY_SNAP, true),
         guideEnabled = prefs.getBoolean(KEY_GUIDE, true),
+        rulerEnabled = prefs.getBoolean(KEY_RULER, true),
     )
 
     private fun save(updated: AppSettings) {
@@ -66,6 +70,7 @@ class SettingsRepository(context: Context) {
             putBoolean(KEY_DISCLAIMER_ACCEPTED, updated.accuracyDisclaimerAccepted)
             putBoolean(KEY_SNAP, updated.snapEnabled)
             putBoolean(KEY_GUIDE, updated.guideEnabled)
+            putBoolean(KEY_RULER, updated.rulerEnabled)
         }
         settings = updated
     }
@@ -79,6 +84,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_DISCLAIMER_ACCEPTED = "accuracy_disclaimer_accepted"
         private const val KEY_SNAP = "snap_to_edges"
         private const val KEY_GUIDE = "guide_lines"
+        private const val KEY_RULER = "ruler_ticks"
 
         /** Reads the opt-out flag without building a repository; safe to call from a crash handler. */
         fun isAnalyticsOptedOut(context: Context): Boolean =

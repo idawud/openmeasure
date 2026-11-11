@@ -51,6 +51,8 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     @Volatile var snapEnabled: Boolean = true
     /** Settings "Guide lines" (F12): references + lock to level/plumb while placing the next point in line mode. */
     @Volatile var guideEnabled: Boolean = true
+    /** Units for F13 ruler ticks; null = ticks off. */
+    @Volatile var rulerUnits: app.openmeasure.measure.units.UnitSystem? = null
     /** Max snap distance in view pixels (set from dp by the UI). Snapped points never move farther. */
     @Volatile var snapRadiusPx: Float = 60f
 
@@ -237,7 +239,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
 
         val pts = session.state.points
         val dots = pts.map { fv.project(it.position) }
-        val built = MeasureFrame.build(pts, finished, rectMode, live, { observe(it, camPos) }, fv)
+        val built = MeasureFrame.build(pts, finished, rectMode, live, rulerUnits, { observe(it, camPos) }, fv)
         _state.value = MeasureUiState(
             coaching, dots, pts.map { it.id }, built.segments, PathTotal.of(built.placed), pts.size, finished,
             canAdd = rectMode || pts.size < PathTotal.MAX_POINTS,

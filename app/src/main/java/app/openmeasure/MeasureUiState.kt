@@ -10,7 +10,13 @@ import app.openmeasure.measure.rect.RectWarning
 import app.openmeasure.measure.snap.SnapKind
 
 /** One drawn line with its label; [live] = last placed point to the reticle. Numbers only inside Length. */
-data class SegmentUi(val segment: ScreenSegment?, val label: LabelContent, val live: Boolean)
+data class SegmentUi(
+    val segment: ScreenSegment?,
+    val label: LabelContent,
+    val live: Boolean,
+    /** F13 ruler ticks (empty unless a number is displayable and the segment is long enough on screen). */
+    val ticks: List<ScreenTick> = emptyList(),
+)
 
 /** Per-frame UI snapshot of the measurement path (screen-space, view pixels). */
 data class MeasureUiState(

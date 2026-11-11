@@ -13,6 +13,7 @@ import app.openmeasure.measure.projection.ScreenSegment
 import app.openmeasure.measure.rect.AreaContent
 import app.openmeasure.measure.rect.QuadAnalyzer
 import app.openmeasure.measure.rect.RectLabel
+import app.openmeasure.measure.units.UnitSystem
 
 /** One frame's camera matrices and tracking state, for projecting world points to view pixels. */
 internal class FrameView(
@@ -43,6 +44,7 @@ internal object MeasureFrame {
         finished: Boolean,
         rectMode: Boolean,
         live: HitResult,
+        rulerUnits: UnitSystem?,
         observe: (Int) -> EndpointObservation,
         f: FrameView,
     ): FrameSegments {
@@ -54,18 +56,16 @@ internal object MeasureFrame {
             val b = points[i + 1].position
             val label = MeasureLabel.build(f.status, observe(i), observe(i + 1), a.distanceTo(b).toDouble())
             placed += label
-            segs += SegmentUi(f.segment(a, b), label, false)
+            segs += SegmentUi(f.segment(a, b), label, false, RulerBuilder.build(a, b, label, rulerUnits, f))
         }
         if (points.isNotEmpty() && !finished) {
             val last = points.size - 1
             val start = points[last].position
             val end = live.position
             segs += if (end != null) {
-                SegmentUi(
-                    f.segment(start, end),
-                    MeasureLabel.build(f.status, observe(last), EndpointObservation.from(live), start.distanceTo(end).toDouble()),
-                    true,
-                )
+                val liveLabel =
+                    MeasureLabel.build(f.status, observe(last), EndpointObservation.from(live), start.distanceTo(end).toDouble())
+                SegmentUi(f.segment(start, end), liveLabel, true, RulerBuilder.build(start, end, liveLabel, rulerUnits, f))
             } else {
                 SegmentUi(null, MeasureLabel.build(f.status, observe(last), EndpointObservation.NONE, 0.0), true)
             }

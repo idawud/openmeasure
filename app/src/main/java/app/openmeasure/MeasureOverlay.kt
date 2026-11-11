@@ -61,6 +61,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     SideEffect {
         controller.snapEnabled = settings.snapEnabled
         controller.guideEnabled = settings.guideEnabled
+        controller.rulerUnits = if (settings.rulerEnabled) settings.unitSystem else null
         controller.snapRadiusPx = snapRadiusPx
     }
     LaunchedEffect(s.snapTick) {
@@ -69,6 +70,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     LaunchedEffect(s.guideTick) {
         if (s.guideTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
+    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     val snackbar = remember { SnackbarHostState() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -95,6 +97,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     pathEffect = if (su.live) PathEffect.dashPathEffect(floatArrayOf(18f, 12f)) else null,
                 )
             }
+            drawRuler(s.segments, textMeasurer)
             s.dots.forEachIndexed { i, d ->
                 if (d == null) return@forEachIndexed
                 val grown = if (s.ids.getOrNull(i) == s.draggingId) 4.dp.toPx() else 0f
