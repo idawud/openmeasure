@@ -15,7 +15,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 
 ## Phase 1 — MVP (all P0 features)
 
-- [ ] T08 [opus] Measurement engine (`core-measure`): Point, Segment, Path models; length in metres; live update from anchors; unit tests.
+- [x] T08 [opus] Measurement engine (`core-measure`): Point, Segment, Path models; length in metres; live update from anchors; unit tests.
 - [ ] T09 [opus] Confidence scorer (F18): combine tracking state, depth confidence at both ends, camera distance → High/Medium/Low; unit tests.
 - [ ] T10 [sonnet] Coaching overlay (F2): "Move your phone slowly" until surface/depth found; reticle appears when ready.
 - [ ] T11 [sonnet] Point-to-point UI (F1): + button drops start/end; line + live label rendered in AR; label always faces user.
