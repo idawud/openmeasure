@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T30 (room scan, no DB bump). ALL tasks T01-T32 built except T07 + T22 (need phone). Next: full test+lint recheck, then phone tests.
+Last committed task: T30 + lint fix (301 JVM tests pass, lint 0 errors/9 warnings). ALL tasks T01-T32 built except T07 + T22 (need phone). Next: phone tests below.
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step

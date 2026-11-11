@@ -42,7 +42,7 @@ internal object ExportActions {
     suspend fun exportCsv(context: Context, items: List<HistoryItem>, units: UnitSystem): Uri = withContext(Dispatchers.IO) {
         val file = newFile(context, "csv")
         // UTF-8 BOM so spreadsheet apps decode the unit symbols correctly.
-        file.writeText("﻿" + CsvExporter.toCsv(items.map(::toRow), units), Charsets.UTF_8)
+        file.writeText("${Char(0xFEFF)}" + CsvExporter.toCsv(items.map(::toRow), units), Charsets.UTF_8)
         uriFor(context, file)
     }
 
