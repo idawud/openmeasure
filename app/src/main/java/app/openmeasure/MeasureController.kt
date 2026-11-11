@@ -12,6 +12,7 @@ import app.openmeasure.measure.geometry.Vec3
 import app.openmeasure.measure.hit.HitResult
 import app.openmeasure.measure.label.LabelContent
 import app.openmeasure.measure.label.MeasureLabel
+import app.openmeasure.measure.label.PathTotal
 import app.openmeasure.measure.model.PointId
 import app.openmeasure.measure.projection.ScreenPoint
 import app.openmeasure.measure.projection.ScreenProjection
@@ -25,18 +26,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/** Per-frame UI snapshot of the point-to-point measurement (screen-space, view pixels). */
+/** One drawn line with its label; [live] = last placed point to the reticle. Numbers only inside Length. */
+data class SegmentUi(val segment: ScreenSegment?, val label: LabelContent, val live: Boolean)
+
+/** Per-frame UI snapshot of the measurement path (screen-space, view pixels). */
 data class MeasureUiState(
     val coaching: CoachingState = CoachingState.MOVE_SLOWLY,
-    /** Placed points projected to the screen (0..2); null entries are behind the camera. */
+    /** Placed points projected to the screen; null entries are behind the camera. */
     val dots: List<ScreenPoint?> = emptyList(),
-    /** Line between start and end (or start and reticle while placing). */
-    val segment: ScreenSegment? = null,
-    /** True while the end is the live reticle position rather than a placed point. */
-    val live: Boolean = false,
-    /** Null until at least one point is placed. Numbers only inside [LabelContent.Length]. */
-    val label: LabelContent? = null,
+    /** Placed segments, plus a trailing live one while a path is being drawn. */
+    val segments: List<SegmentUi> = emptyList(),
+    /** Total metres; null unless >= 2 placed segments and all displayable. */
+    val totalMeters: Double? = null,
     val pointCount: Int = 0,
+    /** Path was ended with Done; the next placed point starts a new path. */
+    val finished: Boolean = false,
+    val canAdd: Boolean = true,
 )
 
 /**
@@ -49,7 +54,9 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private val service = HitTestService()
     private val coachingTracker = CoachingTracker()
     private val session = MeasurementSession()
-    private val endpoints = ArrayList<Endpoint>(2)
+    private val endpoints = ArrayList<Endpoint>()
+    private var finished = false
+    private val pendingDone = AtomicBoolean(false)
     private val pendingPlace = AtomicBoolean(false)
     private val pendingReset = AtomicBoolean(false)
     private val viewM = FloatArray(16)
@@ -64,15 +71,19 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     /** Drop the next point at the reticle on the next frame (ignored unless coaching is READY). */
     fun place() { pendingPlace.set(true) }
     fun reset() { pendingReset.set(true) }
+    /** Finish the current path (keeps it on screen); the next point starts a new one. */
+    fun done() { pendingDone.set(true) }
 
     private fun clearAll() {
         endpoints.forEach { it.anchor.detach() }
         endpoints.clear()
         session.clear()
+        finished = false
     }
 
     private fun onFrame(frame: Frame) {
         if (pendingReset.getAndSet(false)) clearAll()
+        if (pendingDone.getAndSet(false) && endpoints.isNotEmpty()) finished = true
         val tracking = frame.camera.trackingState
         val status = when (tracking) {
             TrackingState.TRACKING -> TrackingStatus.TRACKING
@@ -103,44 +114,57 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val pts = session.state.points
         val dots = pts.map { ScreenProjection.project(it.position, viewM, projM, w, h) }
 
-        var segment: ScreenSegment? = null
-        var label: LabelContent? = null
-        var isLive = false
-        if (pts.size >= 2) {
-            segment = ScreenProjection.projectSegment(pts[0].position, pts[1].position, viewM, projM, w, h)
-            label = MeasureLabel.build(
-                status, observe(0, camPos), observe(1, camPos), session.state.totalLengthMeters,
-            )
-        } else if (pts.size == 1) {
-            isLive = true
+        val segs = ArrayList<SegmentUi>()
+        val placed = ArrayList<LabelContent>()
+        for (i in 0 until pts.size - 1) {
+            val a = pts[i].position
+            val b = pts[i + 1].position
+            val label = MeasureLabel.build(status, observe(i, camPos), observe(i + 1, camPos), a.distanceTo(b).toDouble())
+            placed += label
+            segs += SegmentUi(ScreenProjection.projectSegment(a, b, viewM, projM, w, h), label, false)
+        }
+        if (pts.isNotEmpty() && !finished) {
+            val start = pts.last().position
             val end = live.position
             if (end != null) {
-                segment = ScreenProjection.projectSegment(pts[0].position, end, viewM, projM, w, h)
-                label = MeasureLabel.build(
-                    status, observe(0, camPos), EndpointObservation.from(live),
-                    pts[0].position.distanceTo(end).toDouble(),
+                segs += SegmentUi(
+                    ScreenProjection.projectSegment(start, end, viewM, projM, w, h),
+                    MeasureLabel.build(
+                        status, observe(pts.size - 1, camPos), EndpointObservation.from(live),
+                        start.distanceTo(end).toDouble(),
+                    ),
+                    true,
                 )
             } else {
-                label = MeasureLabel.build(status, observe(0, camPos), EndpointObservation.NONE, 0.0)
+                segs += SegmentUi(
+                    null,
+                    MeasureLabel.build(status, observe(pts.size - 1, camPos), EndpointObservation.NONE, 0.0),
+                    true,
+                )
             }
         }
-        _state.value = MeasureUiState(coaching, dots, segment, isLive, label, pts.size)
+        _state.value = MeasureUiState(
+            coaching, dots, segs, PathTotal.of(placed), pts.size, finished,
+            canAdd = pts.size < PathTotal.MAX_POINTS,
+        )
     }
 
     private fun place(hit: ArHit) {
         val sess = manager.session ?: return
         val pos = hit.result.position ?: return
-        if (endpoints.size >= 2) clearAll()
+        if (finished) clearAll()
+        if (endpoints.size >= PathTotal.MAX_POINTS) return
         val anchor = hit.createAnchor(sess) ?: return
         val id = session.addPoint(pos, hit.result.confidence)
         endpoints += Endpoint(id, anchor, hit.result)
-        if (endpoints.size == 2) {
-            val cm = session.state.totalLengthMeters * 100.0
+        if (endpoints.size >= 2) {
+            val prev = endpoints[endpoints.size - 2]
+            val pp = session.state.point(prev.id)?.position
+            val cm = (pp?.distanceTo(pos) ?: 0f) * 100.0
             android.util.Log.i(
                 "OpenMeasureSpike",
                 "dist=%.1f cm source=%s/%s conf=%.2f/%.2f".format(
-                    cm, endpoints[0].hit.source, hit.result.source,
-                    endpoints[0].hit.confidence, hit.result.confidence,
+                    cm, prev.hit.source, hit.result.source, prev.hit.confidence, hit.result.confidence,
                 ),
             )
         }

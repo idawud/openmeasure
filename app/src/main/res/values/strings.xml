@@ -19,6 +19,10 @@
     <string name="measure_place_point">Place point</string>
     <string name="measure_place_point_desc">Place a measurement point at the crosshair</string>
     <string name="measure_reset">Reset</string>
+    <string name="measure_done">Done</string>
+    <string name="measure_new">New</string>
+    <string name="measure_total">Total %1$s</string>
+    <string name="spoken_path_total">Total path length, %1$s</string>
     <string name="confidence_high">High</string>
     <string name="confidence_medium">Medium</string>
     <string name="confidence_low">Low</string>

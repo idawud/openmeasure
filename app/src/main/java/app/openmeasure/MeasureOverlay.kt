@@ -2,7 +2,9 @@ package app.openmeasure
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -34,20 +36,21 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     val view = LocalView.current
     val ready = s.coaching == CoachingState.READY
     // Haptic only when the end point lands (measurement finished) and Settings haptics is on.
-    val complete = s.pointCount >= 2
-    LaunchedEffect(complete) {
-        if (complete && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+    val placedPoints = s.pointCount
+    LaunchedEffect(placedPoints) {
+        if (placedPoints >= 2 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     Box(Modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             val line = Color(0xFFFFEB3B)
-            s.segment?.let {
+            s.segments.forEach { su ->
+                val it = su.segment ?: return@forEach
                 drawLine(
                     Color.Black, Offset(it.a.x, it.a.y), Offset(it.b.x, it.b.y), strokeWidth = 7.dp.toPx(),
                 )
                 drawLine(
                     line, Offset(it.a.x, it.a.y), Offset(it.b.x, it.b.y), strokeWidth = 3.dp.toPx(),
-                    pathEffect = if (s.live) PathEffect.dashPathEffect(floatArrayOf(18f, 12f)) else null,
+                    pathEffect = if (su.live) PathEffect.dashPathEffect(floatArrayOf(18f, 12f)) else null,
                 )
             }
             s.dots.filterNotNull().forEach {
@@ -60,11 +63,14 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 drawCircle(Color.Green, radius = 3f, center = c)
             }
         }
-        s.label?.let { label ->
-            // First placed dot is the label anchor when no segment is on screen (e.g. no hit yet).
-            val fallback = s.dots.firstNotNullOfOrNull { it }
+        if (s.segments.isNotEmpty()) {
+            // Last placed dot anchors a label when its segment is off screen (e.g. no hit yet).
+            val fallback = s.dots.lastOrNull { it != null }
                 ?: app.openmeasure.measure.projection.ScreenPoint(0f, 0f)
-            MeasureLabelView(label, s.segment, fallback, settings.unitSystem)
+            MeasureLabelsLayer(s.segments, fallback, settings.unitSystem)
+        }
+        s.totalMeters?.let {
+            PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
         Column(
@@ -74,10 +80,18 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             val placeDesc = stringResource(R.string.measure_place_point_desc)
             Button(
                 onClick = { controller.place() },
-                enabled = ready,
+                enabled = ready && s.canAdd,
                 modifier = Modifier.semantics { contentDescription = placeDesc },
             ) { Text(stringResource(R.string.measure_place_point)) }
-            Button(onClick = { controller.reset() }) { Text(stringResource(R.string.measure_reset)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (s.pointCount > 0) {
+                    // "Done" ends the current path; afterwards the same button reads "New" (next point starts fresh).
+                    Button(onClick = { if (s.finished) controller.reset() else controller.done() }) {
+                        Text(stringResource(if (s.finished) R.string.measure_new else R.string.measure_done))
+                    }
+                }
+                Button(onClick = { controller.reset() }) { Text(stringResource(R.string.measure_reset)) }
+            }
         }
     }
 }
