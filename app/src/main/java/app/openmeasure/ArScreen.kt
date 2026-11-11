@@ -84,7 +84,10 @@ fun ArScreen() {
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         if (state == ArSessionState.Running) {
+            val spike = remember { SpikeController(cameraView) }
+            DisposableEffect(spike) { spike.attach(); onDispose { spike.detach() } }
             AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
+            SpikeOverlay(spike)
         } else {
             val text = when (val s = state) {
                 ArSessionState.NeedsInstall -> "Install Google Play Services for AR"
