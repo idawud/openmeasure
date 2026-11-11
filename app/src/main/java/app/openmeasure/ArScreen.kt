@@ -89,7 +89,7 @@ fun ArScreen(settingsRepository: SettingsRepository) {
             val measure = remember { MeasureController(cameraView, manager) }
             DisposableEffect(measure) { measure.attach(); onDispose { measure.detach() } }
             AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
-            MeasureOverlay(measure, settingsRepository)
+            MeasureOverlay(measure, settingsRepository, cameraView)
         } else {
             val text = when (val s = state) {
                 ArSessionState.NeedsInstall -> stringResource(R.string.ar_install_services)

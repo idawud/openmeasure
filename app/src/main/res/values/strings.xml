@@ -61,4 +61,9 @@
     <string name="disclaimer_title">Accuracy disclaimer</string>
     <string name="disclaimer_body">Measurements are estimates. Accuracy depends on lighting, the surface you measure, and distance. Do not use OpenMeasure for critical, legal, or structural decisions.</string>
     <string name="disclaimer_accept">I understand</string>
+    <string name="capture_label">Photo</string>
+    <string name="capture_desc">Take photo with measurements</string>
+    <string name="capture_saved">Saved</string>
+    <string name="capture_failed">Could not save photo</string>
+    <string name="capture_share">Share</string>
 </resources>

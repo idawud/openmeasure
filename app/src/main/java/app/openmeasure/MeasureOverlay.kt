@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -31,7 +33,7 @@ import app.openmeasure.settings.SettingsRepository
 
 /** Camera overlay: crosshair, placed points, line, live label, "+" and reset buttons. */
 @Composable
-fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRepository) {
+fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRepository, cameraView: app.openmeasure.ar.ArCameraView) {
     val stateHolder = controller.state.collectAsState()
     val s by stateHolder
     val settings = settingsRepository.settings
@@ -42,7 +44,14 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     LaunchedEffect(placedPoints) {
         if (placedPoints >= 2 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
+    val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier.fillMaxSize().drawWithContent {
+                layer.record { this@drawWithContent.drawContent() }
+                drawLayer(layer)
+            },
+        ) {
         Canvas(
             Modifier.fillMaxSize().pointDragInput(stateHolder, controller) {
                 if (settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
@@ -80,7 +89,9 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         s.totalMeters?.let {
             PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
+        }
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
+        CaptureButton(layer, cameraView, settings.hapticsEnabled, Modifier.align(Alignment.BottomEnd).padding(24.dp))
         Column(
             Modifier.align(Alignment.BottomCenter).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

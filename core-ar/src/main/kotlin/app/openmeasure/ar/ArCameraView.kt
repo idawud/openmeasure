@@ -36,6 +36,41 @@ class ArCameraView(context: Context, private val manager: ArSessionManager) :
     /** Invoked on the GL thread after each successful session.update(). */
     @Volatile var onFrame: ((Frame) -> Unit)? = null
 
+    @Volatile private var pendingCapture: ((android.graphics.Bitmap?) -> Unit)? = null
+
+    /** Whether at least one camera frame has been drawn (capture is refused before that). */
+    @Volatile var hasFrame = false
+        private set
+
+    /** Reads the next drawn camera frame (no overlay) as a Bitmap; callback runs on the GL thread, null on failure. */
+    fun captureFrame(callback: (android.graphics.Bitmap?) -> Unit) {
+        if (!hasFrame) callback(null) else pendingCapture = callback
+    }
+
+    private fun readPixels(): android.graphics.Bitmap? {
+        val w = width
+        val h = height
+        if (w <= 0 || h <= 0) return null
+        return try {
+            val buf = java.nio.ByteBuffer.allocateDirect(w * h * 4).order(java.nio.ByteOrder.nativeOrder())
+            android.opengl.GLES20.glReadPixels(0, 0, w, h, android.opengl.GLES20.GL_RGBA, android.opengl.GLES20.GL_UNSIGNED_BYTE, buf)
+            buf.rewind()
+            val rgba = IntArray(w * h)
+            buf.asIntBuffer().get(rgba)
+            // Memory bytes are R,G,B,A; native (little endian) int = A<<24|B<<16|G<<8|R. Swap R and B for ARGB.
+            for (i in rgba.indices) {
+                val c = rgba[i]
+                rgba[i] = (c and 0xFF00FF00.toInt()) or ((c and 0xFF) shl 16) or ((c shr 16) and 0xFF) or (0xFF shl 24)
+            }
+            val flipped = app.openmeasure.measure.capture.CaptureUtil.flipRows(rgba, w, h)
+            android.graphics.Bitmap.createBitmap(flipped, w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        } catch (e: RuntimeException) {
+            null
+        } catch (e: OutOfMemoryError) {
+            null
+        }
+    }
+
     init {
         preserveEGLContextOnPause = true
         setEGLContextClientVersion(2)
@@ -75,6 +110,8 @@ class ArCameraView(context: Context, private val manager: ArSessionManager) :
             latestFrame = frame
             _tracking.value = frame.camera.trackingState
             background.draw(frame)
+            if (frame.timestamp != 0L) hasFrame = true
+            pendingCapture?.let { cb -> pendingCapture = null; cb(readPixels()) }
             onFrame?.invoke(frame)
         } catch (e: CameraNotAvailableException) {
             _tracking.value = TrackingState.STOPPED
