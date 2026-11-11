@@ -10,7 +10,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T03 [haiku] Manifest: camera permission, `com.google.ar.core` meta-data `optional`, ARCore availability check stub. Support rotation/resizing.
 - [x] T04 [sonnet] ARCore session lifecycle in `core-ar`: install check, create/resume/pause, camera permission flow, Depth API mode when supported.
 - [x] T05 [sonnet] Camera background rendering in Compose (GLSurfaceView or Filament view) showing live AR feed at 30 fps+.
-- [ ] T06 [opus] Hit-test service: reticle ray → depth map hit, fallback to plane hit; returns world pose + depth confidence. Unit-test the math in `core-measure`.
+- [x] T06 [opus] Hit-test service: reticle ray → depth map hit, fallback to plane hit; returns world pose + depth confidence. Unit-test the math in `core-measure`.
 - [ ] T07 [sonnet] Spike screen: tap twice, log distance between anchors. Manual test on Pixel 8 Pro with 3 reference objects; record results in `docs/ACCURACY.md`. GO/NO-GO note in PROGRESS.md.
 
 ## Phase 1 — MVP (all P0 features)

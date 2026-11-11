@@ -2,14 +2,14 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 0
-Last committed task: T05 (camera background GLSurfaceView, assembleDebug passes; phone check pending)
+Last committed task: T06 (hit-test: 24 JVM tests pass, assembleDebug passes; unverified on device)
 
 ## In progress
-- Task: T06 (hit-test service, [opus]) — delegated to `architect`
+- Task: T07 (spike screen: code via implementer, then manual accuracy test on phone)
 - Uncommitted changes: none at start
 
 ## Next step
-- After T06: read T07 in TASKS.md (NO-GO gate: stop and ask owner if NO-GO).
+- T07 code first; manual test + GO/NO-GO needs owner (steps in Blockers). Hit-test weights/thresholds are guesses: tune on Pixel 8 Pro.
 
 ## Blockers / decisions needed from the owner
 - MANUAL TEST for T05 (Pixel 8 Pro; not blocking other tasks): install debug APK, then check:
@@ -27,3 +27,4 @@ Last committed task: T05 (camera background GLSurfaceView, assembleDebug passes;
   ML Kit pose-detection 17.0.0 (person height); Room 2.8.5 + KSP 2.3.13 (data; no KSP 2.4.x, works);
   kotlinx-coroutines-android 1.10.2 (StateFlow in core-ar).
 - core-ar exposes ArCameraView: trackingState StateFlow, latestFrame, onFrame callback (GL thread).
+- Hit-test: core-measure geometry/ + hit/ (DepthHitTester, HitResolver); core-ar HitTestService.hitTest(frame,x,y). Call on GL thread from ArCameraView.onFrame.
