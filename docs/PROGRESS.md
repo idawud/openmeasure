@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T28 (ruler ticks). Done: T01-T06, T08-T21, T23-T28. Open: T07, T22 (need phone). MeasureController.kt at 297 lines: refactor before growing.
+Last committed task: T28 + refactor (MeasureController split: AnchorStore, Snapper, DragController, RectModeController). Open: T07, T22 (phone). Phase 3 (T29-T32) started build-only.
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step
