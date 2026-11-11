@@ -12,6 +12,16 @@
     <string name="height_depth_note">Depth-capable phones only</string>
     <string name="open_settings">Open settings</string>
     <string name="back">Back</string>
+    <string name="spoken_line">Line, %1$s</string>
+    <string name="spoken_no_distance">Distance unavailable</string>
+    <string name="spoken_level">Level, %1$s off</string>
+    <string name="spoken_no_level">Level reading unavailable</string>
+    <string name="spike_place_point">Place point</string>
+    <string name="spike_reset">Reset</string>
+    <string name="ar_idle">AR idle</string>
+    <string name="ar_install_services">Install Google Play Services for AR</string>
+    <string name="ar_permission_required">Camera permission required</string>
+    <string name="ar_error">AR error: %1$s</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_units">Units</string>

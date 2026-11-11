@@ -89,7 +89,7 @@ fun AppRoot(settingsRepository: SettingsRepository) {
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             when (selected) {
-                MainTab.MEASURE -> ArScreen()
+                MainTab.MEASURE -> ArScreen(settingsRepository)
                 MainTab.LEVEL -> LevelScreen(settingsRepository)
                 MainTab.HEIGHT -> Placeholder()
             }

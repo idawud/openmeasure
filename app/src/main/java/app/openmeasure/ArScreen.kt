@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -24,6 +25,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import app.openmeasure.ar.ArCameraView
 import app.openmeasure.ar.ArSessionManager
 import app.openmeasure.ar.ArSessionState
+import app.openmeasure.settings.SettingsRepository
 
 /** Requests CAMERA, returns a launcher lambda; informs [manager] of the result. */
 @Composable
@@ -37,7 +39,7 @@ fun rememberCameraPermissionRequester(manager: ArSessionManager, onResult: (Bool
 
 /** Shows AR session state as text only (camera rendering arrives in T05). */
 @Composable
-fun ArScreen() {
+fun ArScreen(settingsRepository: SettingsRepository) {
     val context = LocalContext.current
     val activity = context as Activity
     val manager = remember { ArSessionManager() }
@@ -87,13 +89,13 @@ fun ArScreen() {
             val spike = remember { SpikeController(cameraView) }
             DisposableEffect(spike) { spike.attach(); onDispose { spike.detach() } }
             AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
-            SpikeOverlay(spike)
+            SpikeOverlay(spike, settingsRepository)
         } else {
             val text = when (val s = state) {
-                ArSessionState.NeedsInstall -> "Install Google Play Services for AR"
-                ArSessionState.NeedsPermission -> "Camera permission required"
-                is ArSessionState.Error -> "AR error: ${s.message}"
-                else -> "AR idle"
+                ArSessionState.NeedsInstall -> stringResource(R.string.ar_install_services)
+                ArSessionState.NeedsPermission -> stringResource(R.string.ar_permission_required)
+                is ArSessionState.Error -> stringResource(R.string.ar_error, s.message)
+                else -> stringResource(R.string.ar_idle)
             }
             Text(text)
         }

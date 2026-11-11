@@ -27,12 +27,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.openmeasure.R
 import app.openmeasure.measure.level.LevelMode
 import app.openmeasure.measure.level.LevelReading
+import app.openmeasure.measure.units.SpokenLength
 import app.openmeasure.settings.SettingsRepository
 import java.util.Locale
 
@@ -81,11 +86,21 @@ fun LevelScreen(settingsRepository: SettingsRepository) {
         }
         val modeRes = if (reading?.mode == LevelMode.EDGE) R.string.level_mode_edge else R.string.level_mode_flat
         Text(stringResource(modeRes), color = fg, style = MaterialTheme.typography.titleMedium)
+        val degreesSpoken = reading?.let { SpokenLength.speakDegrees(it.tiltDeg.toDouble()) }
+        val levelDescription = if (degreesSpoken != null) {
+            stringResource(R.string.spoken_level, degreesSpoken)
+        } else {
+            stringResource(R.string.spoken_no_level)
+        }
         Text(
             text = reading?.let { String.format(Locale.US, "%.1f°", it.tiltDeg) } ?: "--",
             color = fg,
             fontSize = 72.sp,
             fontWeight = FontWeight.Bold,
+            modifier = Modifier.semantics {
+                contentDescription = levelDescription
+                liveRegion = LiveRegionMode.Polite
+            },
         )
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (reading?.mode) {

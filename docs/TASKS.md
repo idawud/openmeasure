@@ -25,7 +25,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T15 [sonnet] Level tool (F6): rotation-vector sensor, low-pass filter, flat (bubble) and edge modes, green at 0°, optional rising tone.
 - [ ] T16 [sonnet] Capture and share (F7): render overlay into photo, save via MediaStore, share sheet.
 - [x] T17 [haiku] Bottom tab switcher Measure · Level · Height (Height disabled placeholder), settings screen (units, haptics, sound, analytics opt-out, about).
-- [ ] T18 [haiku] Accessibility pass: TalkBack readouts ("Line, 84 centimetres"), haptics on finish, contrast check.
+- [x] T18 [haiku] Accessibility pass: TalkBack readouts ("Line, 84 centimetres"), haptics on finish, contrast check.
 - [x] T19 [haiku] One-time accuracy disclaimer dialog and crash reporting with opt-out.
 - [ ] T20 [sonnet] Large-screen and rotation handling (Android 17 rule): test on foldable/tablet emulator.
 - [ ] T21 [haiku] Run full test suite + lint, fix warnings; write `docs/RELEASE_CHECKLIST.md`.

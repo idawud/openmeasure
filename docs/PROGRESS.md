@@ -2,10 +2,10 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 1 (provisional: T07 GO/NO-GO still pending)
-Last committed task: T15 (level tool). Done: T01-T06, T08, T09, T14, T15, T17, T19. T07 code committed, NOT ticked.
+Last committed task: T18 (accessibility). Done: T01-T06, T08, T09, T14, T15, T17-T19. T07 code committed, NOT ticked.
 
 ## In progress
-- Owner chose build-only continuation. Next phone-independent: T18 (accessibility), then T10-T13/T16 UI (unverified on device).
+- Owner chose build-only continuation. Next: T10-T13, T16 AR UI (unverified on device).
 - T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. NO-GO = stop and ask owner.
 
 ## Blockers / decisions needed from the owner
@@ -17,7 +17,7 @@ Last committed task: T15 (level tool). Done: T01-T06, T08, T09, T14, T15, T17, T
      Send per object: true length, 5 readings, source (DEPTH/PLANE), oddities. Target ~1 cm short / 1-2% long (SPEC).
   3. T15 level: Level tab; phone flat shows bubble, on its side shows bar; green <0.5 deg; check with a known-level
      surface; tone/haptic follow Settings toggles; rotate = brief reset only.
-  4. T17/T19: tabs, gear icon renders sensibly, settings persist, disclaimer shows once.
+  4. T17/T19/T18: tabs, gear icon, settings persist, disclaimer once; TalkBack readouts; level live region may be chatty.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
