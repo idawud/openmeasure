@@ -42,6 +42,8 @@ data class MeasureUiState(
     val rect: RectUi? = null,
     /** Increments each time auto-detect finds nothing; the UI shows the manual-corners hint. */
     val detectFailTick: Int = 0,
+    /** Non-null when a displayable measurement exists that the user may save to history. */
+    val save: SaveCandidate? = null,
 )
 
 /** Rectangle overlay: [area] gated by confidence; [center] is the projected quad centre (null if behind camera). */

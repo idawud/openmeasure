@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T25 (person height, build-only; ML Kit dep moved to core-ar). Done: T01-T06, T08-T21, T23-T25. Open: T07, T22 (phone). Lint leftovers + release gaps in docs/RELEASE_CHECKLIST.md.
+Last committed task: T26 (history, Room v1; build-only). Done: T01-T06, T08-T21, T23-T26. Open: T07, T22 (phone). Lint/release gaps in docs/RELEASE_CHECKLIST.md.
 
 ## In progress
 - Owner chose build-only continuation. Next: wait for owner phone results (T07 -> docs/ACCURACY.md, GO/NO-GO), then T22 and tuning; Phase 2 only after GO (unverified on device).
@@ -23,7 +23,8 @@ Last committed task: T25 (person height, build-only; ML Kit dep moved to core-ar
   7. T23 snap: table edge at 1 m error (~7 mm expected), haptic once per acquire, no snap on flat noisy wall; radius 24dp may be too small for 160x120 depth.
   8. T24: Detect on a book at 0.5-1.5 m vs tape (<=1 cm); flat wall -> hint; one Undo removes 4 corners; mode switch clears; area TalkBack; landscape controls not crowded.
   9. T25 height: skeleton aligns portrait+landscape; stable readout (spread <1 cm may never occur: raise stableSpreadM); tape check at 2/3/4 m (expect +-1.5 cm); AR session now shared in AppRoot, paused on tab leave: verify Measure<->Level<->Height switching and resume.
-  10. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
+  10. T26 history: Save line/rect/height -> History row+thumbnail; unit switch re-formats; note edit, delete+Undo, Clear all; photo deleted -> icon fallback.
+  11. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
   5. T17/T19/T18: tabs, gear icon, settings persist, disclaimer once; TalkBack readouts; level live region may be chatty.
 
 ## Notes that a new session must know

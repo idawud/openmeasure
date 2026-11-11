@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.remember
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,6 +66,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         if (s.snapTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
+    val snackbar = remember { SnackbarHostState() }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         Box(
             Modifier.fillMaxSize().drawWithContent {
@@ -117,6 +121,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
         }
+        SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 72.dp))
         DetectFailHint(s.detectFailTick, Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.safeDrawing).padding(top = 24.dp))
         if (ready || s.draggingId != null) SnapLabel(s.snapKind, s.snapPoint)
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
@@ -134,6 +139,11 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             Modifier.align(Alignment.BottomCenter).windowInsetsPadding(insets).padding(if (short) 8.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            s.save?.let { cand ->
+                HistorySaveButton(
+                    snackbar, Modifier.padding(bottom = if (short) 4.dp else 8.dp), photo = cameraView to layer,
+                ) { uri -> cand.toItem(uri, System.currentTimeMillis()) }
+            }
             RectModeBar(s.rectMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
             val placeDesc = stringResource(if (s.rectMode) R.string.measure_place_corner_desc else R.string.measure_place_point_desc)
             val placeButton: @Composable () -> Unit = {

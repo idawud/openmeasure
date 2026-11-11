@@ -17,7 +17,12 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
+    testImplementation(libs.junit)
     implementation(project(":core-measure"))
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

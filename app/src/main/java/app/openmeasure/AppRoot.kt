@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.openmeasure.ar.ArSessionManager
+import app.openmeasure.history.HistoryScreen
 import app.openmeasure.level.LevelScreen
 import app.openmeasure.settings.SettingsRepository
 import app.openmeasure.settings.SettingsScreen
@@ -58,6 +59,11 @@ fun AppRoot(settingsRepository: SettingsRepository) {
     val depthSupported by arManager.depthSupported.collectAsState()
     // Remembered above the Settings early return so the session and depth flag survive opening Settings.
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showHistory by rememberSaveable { mutableStateOf(false) }
+    if (showHistory) {
+        HistoryScreen(settingsRepository, onBack = { showHistory = false })
+        return
+    }
     if (showSettings) {
         SettingsScreen(repository = settingsRepository, onBack = { showSettings = false })
         return
@@ -66,7 +72,7 @@ fun AppRoot(settingsRepository: SettingsRepository) {
     var selected by rememberSaveable { mutableStateOf(MainTab.MEASURE) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 600.dp
-        AppScaffold(settingsRepository, arManager, depthSupported, wide, selected, { selected = it }, { showSettings = true })
+        AppScaffold(settingsRepository, arManager, depthSupported, wide, selected, { selected = it }, { showSettings = true }, { showHistory = true })
     }
 }
 
@@ -80,12 +86,16 @@ private fun AppScaffold(
     selected: MainTab,
     onSelect: (MainTab) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenHistory: () -> Unit,
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
+                    IconButton(onClick = onOpenHistory) {
+                        Icon(imageVector = AppIcons.History, contentDescription = stringResource(R.string.open_history))
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = AppIcons.Settings,

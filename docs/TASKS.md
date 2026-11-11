@@ -36,7 +36,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T23 [opus] Edge and corner snapping (F8) with haptic feedback.
 - [x] T24 [opus] Rectangle detection + area (F9) with manual 4-corner fallback.
 - [x] T25 [opus] Person height (F10): ML Kit pose + depth floor distance; depth-capable phones only.
-- [ ] T26 [sonnet] Measurement history (F11): Room entities, list screen, notes, delete.
+- [x] T26 [sonnet] Measurement history (F11): Room entities, list screen, notes, delete.
 - [ ] T27 [sonnet] Vertical/horizontal guide lines (F12).
 - [ ] T28 [sonnet] Ruler view ticks (F13).
 

@@ -240,6 +240,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             rectMode = rectMode,
             rect = built.rect,
             detectFailTick = detectFailTick,
+            save = if (status == TrackingStatus.TRACKING) SaveCandidate.of(rectMode, finished, built.placed, built.rect, pts) else null,
         )
     }
 

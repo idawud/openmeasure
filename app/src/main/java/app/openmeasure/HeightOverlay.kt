@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import app.openmeasure.data.HistoryItem
+import app.openmeasure.data.MeasurementKind
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -59,9 +63,12 @@ fun HeightOverlay(cameraView: ArCameraView, manager: ArSessionManager, settingsR
     val state by service.state.collectAsState()
     val units = settingsRepository.settings.unitSystem
     var captured by rememberSaveable { mutableStateOf<Float?>(null) }
+    var capturedLevel by rememberSaveable { mutableStateOf(ConfidenceLevel.LOW) }
+    val snackbar = remember { SnackbarHostState() }
     val s = state.smoothed
 
     Box(Modifier.fillMaxSize()) {
+        SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).safeDrawingPadding().padding(top = 120.dp))
         val bones = state.skeletonView
         Canvas(Modifier.fillMaxSize()) {
             for (i in 0 until bones.size - 3 step 4) {
@@ -95,8 +102,16 @@ fun HeightOverlay(cameraView: ArCameraView, manager: ArSessionManager, settingsR
             }
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 val canCapture = s.stable && s.heightMeters != null
-                Button(onClick = { captured = s.heightMeters }, enabled = canCapture) {
+                Button(onClick = { captured = s.heightMeters; capturedLevel = s.confidenceLevel }, enabled = canCapture) {
                     Text(stringResource(R.string.height_capture))
+                }
+                captured?.let { h ->
+                    HistorySaveButton(snackbar) {
+                        HistoryItem(
+                            createdAtMillis = System.currentTimeMillis(), kind = MeasurementKind.HEIGHT, heightMeters = h.toDouble(),
+                            confidenceLevel = capturedLevel.name,
+                        )
+                    }
                 }
                 if (captured != null) OutlinedButton(onClick = { captured = null; service.reset() }) {
                     Text(stringResource(R.string.height_clear))
