@@ -16,14 +16,22 @@ import com.google.ar.core.TrackingState
 import com.google.ar.core.HitResult as ArCoreHitResult
 import com.google.ar.core.Pose as ArPose
 
-/** Engine result plus the ARCore plane hit it came from (if any), for trackable-attached anchors. */
-class ArHit(val result: HitResult, private val planeHit: ArCoreHitResult?) {
-    /** Plane hits anchor to the plane (follows plane refinement); depth hits use a free anchor. */
-    fun createAnchor(session: Session): Anchor? = when {
-        !result.isHit -> null
-        planeHit != null && result.source == app.openmeasure.measure.hit.HitSource.PLANE ->
-            planeHit.trackable.createAnchor(result.pose!!.toArPose())
-        else -> session.createAnchor(result.pose!!.toArPose())
+/** Engine result plus the ARCore plane hit it came from (if any). */
+class ArHit(val result: HitResult, val planeHit: ArCoreHitResult?) {
+    /** Same hit with the position replaced (e.g. temporally smoothed); keeps source, rotation and confidence. */
+    fun withPosition(p: Vec3): ArHit = if (!result.isHit) this else ArHit(
+        result.copy(position = p, pose = result.pose?.copy(translation = p) ?: Pose(p)), planeHit,
+    )
+
+    /**
+     * Always a world-fixed anchor at the final measured position. Plane-attached anchors were the drift
+     * source: ARCore moves them whenever the plane is refined, re-fit or merged (subsumed), so a point placed
+     * from a depth-fused/snapped position kept sliding after placement. World anchors only move on genuine
+     * map corrections, which [app.openmeasure.measure.session.AnchorPoseFilter] gates.
+     */
+    fun createAnchor(session: Session): Anchor? {
+        val p = result.position ?: return null
+        return session.createAnchor(ArPose.makeTranslation(p.x, p.y, p.z))
     }
 }
 

@@ -8,6 +8,9 @@ import app.openmeasure.measure.coaching.CoachingState
 import app.openmeasure.measure.coaching.CoachingTracker
 import app.openmeasure.measure.confidence.TrackingStatus
 import app.openmeasure.measure.geometry.Vec3
+import app.openmeasure.measure.hit.HitSource
+import app.openmeasure.measure.hit.ReticleSmoother
+import app.openmeasure.measure.snap.SnapKind
 import app.openmeasure.measure.label.PathTotal
 import app.openmeasure.measure.model.PointId
 import app.openmeasure.measure.session.MeasurementSession
@@ -28,7 +31,8 @@ import kotlinx.coroutines.flow.asStateFlow
 class MeasureController(private val view: ArCameraView, private val manager: ArSessionManager) {
     private val service = HitTestService()
     private val session = MeasurementSession()
-    private val anchors = AnchorStore(manager, session)
+    private val anchors = AnchorStore(manager, session, debugLog = isDebuggable(view.context))
+    private val smoother = ReticleSmoother()
     private val snapper = Snapper(service, view)
     private val drag = DragController(manager, session, anchors, service, snapper)
     private val rect = RectModeController(manager, session, anchors, service, ::clearAll)
@@ -139,11 +143,13 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val h = view.height.toFloat()
         snapper.syncRadius()
         val liveSnap = snapper.snap(frame, w / 2f, h / 2f, service.hitTestCenter(frame, view.width, view.height), snapper.reticle)
-        val liveHit: ArHit = liveSnap.hit
+        val camPos = frame.camera.pose.let { Vec3(it.tx(), it.ty(), it.tz()) }
+        // Raw per-frame depth is noisy along the ray; smooth it so the point lands where the reticle visibly was.
+        // Plane hits (ray-plane intersection) and edge snaps (own hysteresis) are already stable.
+        val liveHit: ArHit = smoothed(liveSnap, camPos, status)
         var live = liveHit.result
         frame.camera.getViewMatrix(viewM, 0)
         frame.camera.getProjectionMatrix(projM, 0, NEAR, FAR)
-        val camPos = frame.camera.pose.let { Vec3(it.tx(), it.ty(), it.tz()) }
         val fv = FrameView(viewM, projM, w, h, camPos, status)
         // F12: when aligned, the live end becomes its level/plumb projection so lengths are the true horizontal/vertical distance.
         val boxDone = box.active && session.state.points.size >= BoxModeController.POINTS
@@ -157,8 +163,9 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         if (pendingDetect.getAndSet(false) && coaching == CoachingState.READY) rect.detect(frame, w / 2f, h / 2f)
         drag.apply(frame, status)
 
-        // Anchors keep points glued to the world as tracking refines (a dragged point follows the finger instead).
-        val updates = anchors.poses(drag.draggingId)
+        // Anchors keep points glued to the world as tracking refines (a dragged point follows the finger instead);
+        // AnchorStore filters out jitter, non-tracking poses and one-frame jumps so placed points stay frozen.
+        val updates = anchors.poses(drag.draggingId, status == TrackingStatus.TRACKING)
         if (updates.isNotEmpty()) session.updatePoints(updates)
 
         val pts = session.state.points
@@ -194,6 +201,16 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         )
     }
 
+    private fun smoothed(snap: app.openmeasure.ar.SnapService.Outcome, camPos: Vec3, status: TrackingStatus): ArHit {
+        val r = snap.hit.result
+        if (status != TrackingStatus.TRACKING || snap.kind != SnapKind.NONE || r.source != HitSource.DEPTH) {
+            smoother.reset()
+            return snap.hit
+        }
+        val p = smoother.update(camPos, r.position, r.source) ?: return snap.hit
+        return snap.hit.withPosition(p)
+    }
+
     private fun place(hit: ArHit, aligned: Vec3? = null) {
         val sess = manager.session ?: return
         val pos = aligned ?: hit.result.position ?: return
@@ -214,5 +231,9 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private companion object {
         const val NEAR = 0.05f
         const val FAR = 100f
+
+        /** Debug builds (BuildConfig is disabled in this project): drift diagnostics only, never in release. */
+        fun isDebuggable(ctx: android.content.Context) =
+            (ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 }
