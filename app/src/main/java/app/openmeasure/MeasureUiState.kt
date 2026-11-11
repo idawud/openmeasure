@@ -48,6 +48,10 @@ data class MeasureUiState(
     val guideTick: Int = 0,
     /** F9: rectangle mode (max 4 corners, closed quad with area). */
     val rectMode: Boolean = false,
+    /** F16: angle mode (A, vertex, B). */
+    val angleMode: Boolean = false,
+    /** Angle label and arc data once 3 points exist in angle mode. */
+    val angle: AngleUi? = null,
     /** Area label + warnings once 4 corners exist in rectangle mode. */
     val rect: RectUi? = null,
     /** Increments each time auto-detect finds nothing; the UI shows the manual-corners hint. */

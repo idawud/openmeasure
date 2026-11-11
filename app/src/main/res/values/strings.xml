@@ -44,6 +44,8 @@
     <string name="spoken_line_confidence">Line, %1$s, %2$s confidence</string>
     <string name="measure_mode_line">Line</string>
     <string name="measure_mode_rect">Rectangle</string>
+    <string name="measure_mode_angle">Angle</string>
+    <string name="spoken_angle_confidence">%1$s, %2$s confidence</string>
     <string name="measure_mode_desc">Measuring mode</string>
     <string name="measure_detect">Detect</string>
     <string name="measure_detect_desc">Detect a rectangle at the crosshair</string>

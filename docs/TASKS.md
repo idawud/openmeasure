@@ -44,5 +44,5 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 
 - [ ] T29 [opus] Box volume (F14).
 - [ ] T30 [opus] Room scan to floor plan (F15).
-- [ ] T31 [sonnet] Angle tool (F16).
+- [x] T31 [sonnet] Angle tool (F16).
 - [ ] T32 [haiku] Export CSV/PDF (F17).

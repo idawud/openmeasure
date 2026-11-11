@@ -32,6 +32,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private val snapper = Snapper(service, view)
     private val drag = DragController(manager, session, anchors, service, snapper)
     private val rect = RectModeController(manager, session, anchors, service, ::clearAll)
+    private val angle = AngleModeController()
     private val commands = ConcurrentLinkedQueue<() -> Unit>()
 
     /** Settings "Snap to edges"; read on the GL thread every frame. */
@@ -70,7 +71,12 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     /** Finish the current path (keeps it on screen); the next point starts a new one. */
     fun done() { pendingDone.set(true) }
     /** F9: switch between line and rectangle mode (clears the current measurement, undoable). */
-    fun setRectMode(on: Boolean) { commands += { if (rect.active != on) { rect.active = on; clearAll() } } }
+    fun setRectMode(on: Boolean) = setMode(on, false)
+    /** F16: switch angle mode on/off (clears the measurement; rectangle and angle are mutually exclusive). */
+    fun setAngleMode(on: Boolean) = setMode(false, on)
+    private fun setMode(rectOn: Boolean, angleOn: Boolean) {
+        commands += { if (rect.active != rectOn || angle.active != angleOn) { rect.active = rectOn; angle.active = angleOn; clearAll() } }
+    }
     /** F9: auto-detect a rectangle at the reticle on the next frame; failure bumps [MeasureUiState.detectFailTick]. */
     fun detect() { pendingDetect.set(true) }
 
@@ -121,7 +127,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val camPos = frame.camera.pose.let { Vec3(it.tx(), it.ty(), it.tz()) }
         val fv = FrameView(viewM, projM, w, h, camPos, status)
         // F12: when aligned, the live end becomes its level/plumb projection so lengths are the true horizontal/vertical distance.
-        val start = if (rect.active || finished) null else session.state.points.lastOrNull()?.position
+        val start = if (rect.active || angle.active || finished) null else session.state.points.lastOrNull()?.position
         val g = guide.update(start, live.position, guideEnabled && status == TrackingStatus.TRACKING, fv)
         lockedEnd = if (g != null && g.locked) g.end else null
         lockedEnd?.let { live = live.copy(position = it) }
@@ -137,11 +143,13 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
 
         val pts = session.state.points
         val dots = pts.map { fv.project(it.position) }
-        val built = MeasureFrame.build(pts, finished, rect.active, live, rulerUnits, { anchors.observe(it, camPos) }, fv)
+        val observe = { i: Int -> anchors.observe(i, camPos) }
+        val angleDone = angle.active && pts.size >= AngleModeController.POINTS
+        val built = MeasureFrame.build(pts, finished || angleDone, rect.active, live, rulerUnits, observe, fv)
         val dragging = drag.draggingId != null
         _state.value = MeasureUiState(
-            coaching, dots, pts.map { it.id }, built.segments, PathTotal.of(built.placed), pts.size, finished,
-            canAdd = rect.active || pts.size < PathTotal.MAX_POINTS,
+            coaching, dots, pts.map { it.id }, built.segments, if (angle.active) null else PathTotal.of(built.placed), pts.size, finished,
+            canAdd = rect.active || angle.active || pts.size < PathTotal.MAX_POINTS,
             canUndo = session.state.canUndo,
             draggingId = drag.draggingId,
             snapKind = if (dragging) drag.snapKind else liveSnap.kind,
@@ -150,16 +158,19 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             guide = g?.ui,
             guideTick = guide.acquireTick,
             rectMode = rect.active,
+            angleMode = angle.active,
+            angle = angle.build(pts, observe, fv),
             rect = built.rect,
             detectFailTick = rect.failTick,
-            save = if (status == TrackingStatus.TRACKING) SaveCandidate.of(rect.active, finished, built.placed, built.rect, pts) else null,
+            save = if (status == TrackingStatus.TRACKING && !angle.active) SaveCandidate.of(rect.active, finished, built.placed, built.rect, pts) else null,
         )
     }
 
     private fun place(hit: ArHit, aligned: Vec3? = null) {
         val sess = manager.session ?: return
         val pos = aligned ?: hit.result.position ?: return
-        if (finished || (rect.active && session.state.points.size >= MeasureFrame.RECT_CORNERS)) clearAll()
+        if (finished || (rect.active && session.state.points.size >= MeasureFrame.RECT_CORNERS) ||
+            (angle.active && session.state.points.size >= AngleModeController.POINTS)) clearAll()
         if (session.state.points.size >= PathTotal.MAX_POINTS) return
         val anchor = (if (aligned != null) anchors.createAt(pos) else hit.createAnchor(sess)) ?: return
         val id = session.addPoint(pos, hit.result.confidence)

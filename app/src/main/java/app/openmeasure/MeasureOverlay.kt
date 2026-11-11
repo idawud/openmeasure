@@ -97,6 +97,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     pathEffect = if (su.live) PathEffect.dashPathEffect(floatArrayOf(18f, 12f)) else null,
                 )
             }
+            s.angle?.let { drawAngleArc(it) }
             drawRuler(s.segments, textMeasurer)
             s.dots.forEachIndexed { i, d ->
                 if (d == null) return@forEachIndexed
@@ -124,6 +125,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 ?: app.openmeasure.measure.projection.ScreenPoint(0f, 0f)
             MeasureLabelsLayer(s.segments, fallback, settings.unitSystem)
         }
+        s.angle?.let { AngleLabelView(it) }
         s.rect?.let { RectAreaLabel(it, settings.unitSystem) }
         s.totalMeters?.let {
             PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
@@ -155,7 +157,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     snackbar, Modifier.padding(bottom = if (short) 4.dp else 8.dp), photo = cameraView to layer,
                 ) { uri -> cand.toItem(uri, System.currentTimeMillis()) }
             }
-            RectModeBar(s.rectMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
+            RectModeBar(s.rectMode, s.angleMode, ready, controller, Modifier.padding(bottom = if (short) 4.dp else 8.dp))
             val placeDesc = stringResource(if (s.rectMode) R.string.measure_place_corner_desc else R.string.measure_place_point_desc)
             val placeButton: @Composable () -> Unit = {
                 Button(
@@ -173,7 +175,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     enabled = s.canUndo,
                     modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = undoDesc },
                 ) { Text(stringResource(R.string.measure_undo)) }
-                if (s.pointCount > 0 && !s.rectMode) {
+                if (s.pointCount > 0 && !s.rectMode && !s.angleMode) {
                     // "Done" ends the current path; afterwards the same button reads "New" (next point starts fresh).
                     Button(
                         onClick = { if (s.finished) controller.reset() else controller.done() },

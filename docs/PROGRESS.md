@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T28 + refactor (MeasureController split: AnchorStore, Snapper, DragController, RectModeController). Open: T07, T22 (phone). Phase 3 (T29-T32) started build-only.
+Last committed task: T31 (angle tool) after MeasureController split. Done: T01-T06, T08-T21, T23-T28, T31. Open: T07, T22 (phone); Phase 3: T29, T30 (opus), T32.
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step
@@ -25,6 +25,7 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   9. T26 history: save line/rect/height, unit switch re-formats, note edit, delete+Undo, clear all.
   10. T27 guides: Level/Plumb chip, lock at 2 deg (release 4), placed point exactly level/plumb, chip not overlapping.
   11. T28 ruler ticks: appear on approach, thin out with distance, upright labels, none when confidence poor, toggle works, metric+imperial.
+  12. T31 angle: A,V,B + arc + label; 90 deg corner ~90.0; arc takes smaller sweep near 180; drag/undo update; mode switch clears.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).

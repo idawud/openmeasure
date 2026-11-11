@@ -37,7 +37,7 @@ import kotlinx.coroutines.delay
 
 /** F9: Line / Rectangle mode toggle, plus "Detect" (auto-detect at the reticle) in rectangle mode. */
 @Composable
-fun RectModeBar(rectMode: Boolean, ready: Boolean, controller: MeasureController, modifier: Modifier = Modifier) {
+fun RectModeBar(rectMode: Boolean, angleMode: Boolean, ready: Boolean, controller: MeasureController, modifier: Modifier = Modifier) {
     val modeDesc = stringResource(R.string.measure_mode_desc)
     Row(
         modifier.semantics { contentDescription = modeDesc },
@@ -45,12 +45,16 @@ fun RectModeBar(rectMode: Boolean, ready: Boolean, controller: MeasureController
         verticalAlignment = Alignment.CenterVertically,
     ) {
         FilterChip(
-            selected = !rectMode, onClick = { controller.setRectMode(false) },
+            selected = !rectMode && !angleMode, onClick = { controller.setRectMode(false) },
             label = { Text(stringResource(R.string.measure_mode_line)) }, modifier = Modifier.heightIn(min = 48.dp),
         )
         FilterChip(
             selected = rectMode, onClick = { controller.setRectMode(true) },
             label = { Text(stringResource(R.string.measure_mode_rect)) }, modifier = Modifier.heightIn(min = 48.dp),
+        )
+        FilterChip(
+            selected = angleMode, onClick = { controller.setAngleMode(true) },
+            label = { Text(stringResource(R.string.measure_mode_angle)) }, modifier = Modifier.heightIn(min = 48.dp),
         )
         if (rectMode) {
             val detectDesc = stringResource(R.string.measure_detect_desc)
