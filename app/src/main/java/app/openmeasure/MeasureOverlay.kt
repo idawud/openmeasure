@@ -4,6 +4,12 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,7 +51,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         if (placedPoints >= 2 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
-    Box(Modifier.fillMaxSize()) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
         Box(
             Modifier.fillMaxSize().drawWithContent {
                 layer.record { this@drawWithContent.drawContent() }
@@ -91,18 +97,31 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         }
         }
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
-        CaptureButton(layer, cameraView, settings.hapticsEnabled, Modifier.align(Alignment.BottomEnd).padding(24.dp))
+        // Narrow or short windows (split screen, landscape): capture moves to the top-end corner and
+        // the place button joins the action row so controls never overlap.
+        val narrow = maxWidth < 420.dp
+        val short = maxHeight < 420.dp
+        val insets = WindowInsets.safeDrawing.union(WindowInsets.displayCutout)
+        CaptureButton(
+            layer, cameraView, settings.hapticsEnabled,
+            Modifier.align(if (narrow || short) Alignment.TopEnd else Alignment.BottomEnd)
+                .windowInsetsPadding(insets).padding(if (narrow || short) 8.dp else 24.dp),
+        )
         Column(
-            Modifier.align(Alignment.BottomCenter).padding(24.dp),
+            Modifier.align(Alignment.BottomCenter).windowInsetsPadding(insets).padding(if (short) 8.dp else 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val placeDesc = stringResource(R.string.measure_place_point_desc)
-            Button(
-                onClick = { controller.place() },
-                enabled = ready && s.canAdd,
-                modifier = Modifier.semantics { contentDescription = placeDesc },
-            ) { Text(stringResource(R.string.measure_place_point)) }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            val placeButton: @Composable () -> Unit = {
+                Button(
+                    onClick = { controller.place() },
+                    enabled = ready && s.canAdd,
+                    modifier = Modifier.semantics { contentDescription = placeDesc },
+                ) { Text(stringResource(R.string.measure_place_point)) }
+            }
+            if (!short) placeButton()
+            Row(horizontalArrangement = Arrangement.spacedBy(if (narrow) 6.dp else 12.dp)) {
+                if (short) placeButton()
                 val undoDesc = stringResource(R.string.measure_undo_desc)
                 Button(
                     onClick = { controller.undo() },

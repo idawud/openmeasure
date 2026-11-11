@@ -2,10 +2,10 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 1 (provisional: T07 GO/NO-GO still pending)
-Last committed task: T16 (capture+share, build-only). Done: T01-T06, T08-T19. T07 code committed, NOT ticked.
+Last committed task: T20 (large-screen code audit; emulator checks pending). Done: T01-T06, T08-T20. T07 code committed, NOT ticked.
 
 ## In progress
-- Owner chose build-only continuation. Next: T20 (code audit), T21 (lint + checklist), T22 needs phone (unverified on device).
+- Owner chose build-only continuation. Next: T21 (lint + release checklist); T22 + T07 need phone (unverified on device).
 - T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. NO-GO = stop and ask owner.
 
 ## Blockers / decisions needed from the owner
@@ -19,7 +19,8 @@ Last committed task: T16 (capture+share, build-only). Done: T01-T06, T08-T19. T0
      surface; tone/haptic follow Settings toggles; rotate = brief reset only.
   4. T13: drag endpoint (56dp above finger), long-press removes, Undo restores, no jump when tracking lost.
   5. T16: photo saved in Pictures/OpenMeasure upright, no colour tint, overlay aligned, Share chooser works (API 26-28 save gated: no storage permission).
-  6. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
+  6. T20 emulator: tablet landscape (rail, settings centred), split-screen/freeform (camera geometry), foldable posture, rotate mid-measurement, cutout.
+  7. T10-T12: coaching hint; dots/line track after moving+rotation; per-segment labels + total chip, no overlap; Done/New; hint not number when poor.
   5. T17/T19/T18: tabs, gear icon, settings persist, disclaimer once; TalkBack readouts; level live region may be chatty.
 
 ## Notes that a new session must know

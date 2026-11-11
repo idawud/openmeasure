@@ -27,7 +27,7 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T17 [haiku] Bottom tab switcher Measure · Level · Height (Height disabled placeholder), settings screen (units, haptics, sound, analytics opt-out, about).
 - [x] T18 [haiku] Accessibility pass: TalkBack readouts ("Line, 84 centimetres"), haptics on finish, contrast check.
 - [x] T19 [haiku] One-time accuracy disclaimer dialog and crash reporting with opt-out.
-- [ ] T20 [sonnet] Large-screen and rotation handling (Android 17 rule): test on foldable/tablet emulator.
+- [x] T20 [sonnet] Large-screen and rotation handling (Android 17 rule): test on foldable/tablet emulator.
 - [ ] T21 [haiku] Run full test suite + lint, fix warnings; write `docs/RELEASE_CHECKLIST.md`.
 - [ ] T22 [sonnet] Accuracy test run on Pixel 8 Pro (10 objects, 3 light levels) → `docs/ACCURACY.md`; must meet ≤ 1 cm median error at 1 m or open fix tasks.
 

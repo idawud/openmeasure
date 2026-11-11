@@ -2,6 +2,10 @@ package app.openmeasure
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -49,12 +53,27 @@ fun AppRoot(settingsRepository: SettingsRepository) {
     }
 
     var selected by rememberSaveable { mutableStateOf(MainTab.MEASURE) }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val wide = maxWidth >= 600.dp
+        AppScaffold(settingsRepository, wide, selected, { selected = it }, { showSettings = true })
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppScaffold(
+    settingsRepository: SettingsRepository,
+    wide: Boolean,
+    selected: MainTab,
+    onSelect: (MainTab) -> Unit,
+    onOpenSettings: () -> Unit,
+) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    IconButton(onClick = { showSettings = true }) {
+                    IconButton(onClick = onOpenSettings) {
                         Icon(
                             imageVector = AppIcons.Settings,
                             contentDescription = stringResource(R.string.open_settings),
@@ -64,7 +83,7 @@ fun AppRoot(settingsRepository: SettingsRepository) {
             )
         },
         bottomBar = {
-            Column {
+            if (!wide) Column {
                 Text(
                     text = stringResource(R.string.height_depth_note),
                     style = MaterialTheme.typography.labelSmall,
@@ -78,7 +97,7 @@ fun AppRoot(settingsRepository: SettingsRepository) {
                         NavigationBarItem(
                             selected = selected == tab,
                             enabled = tab.enabled,
-                            onClick = { selected = tab },
+                            onClick = { onSelect(tab) },
                             icon = { Icon(tab.icon, contentDescription = null) },
                             label = { Text(stringResource(tab.labelRes)) },
                         )
@@ -87,11 +106,26 @@ fun AppRoot(settingsRepository: SettingsRepository) {
             }
         },
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            when (selected) {
-                MainTab.MEASURE -> ArScreen(settingsRepository)
-                MainTab.LEVEL -> LevelScreen(settingsRepository)
-                MainTab.HEIGHT -> Placeholder()
+        Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            if (wide) {
+                NavigationRail {
+                    MainTab.entries.forEach { tab ->
+                        NavigationRailItem(
+                            selected = selected == tab,
+                            enabled = tab.enabled,
+                            onClick = { onSelect(tab) },
+                            icon = { Icon(tab.icon, contentDescription = null) },
+                            label = { Text(stringResource(tab.labelRes)) },
+                        )
+                    }
+                }
+            }
+            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+                when (selected) {
+                    MainTab.MEASURE -> ArScreen(settingsRepository)
+                    MainTab.LEVEL -> LevelScreen(settingsRepository)
+                    MainTab.HEIGHT -> Placeholder()
+                }
             }
         }
     }
