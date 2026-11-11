@@ -2,13 +2,13 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 0 (spike)
-Last committed task: T08 (measurement engine, 49 JVM tests pass); T07 code committed, T07 NOT ticked (awaiting phone test + GO/NO-GO)
+Last committed task: T09 (confidence scorer, 67 JVM tests pass); T07 code committed, NOT ticked (awaiting phone test + GO/NO-GO)
 
 ## In progress
 - Task: T07 — waiting on owner's manual accuracy test on the Pixel 8 Pro
 
 ## Next step
-- Owner reports T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. Meanwhile T09 (confidence scorer) is next, provisional on GO.
+- Owner reports T07 results -> write docs/ACCURACY.md, record GO/NO-GO, tick T07. Phase 1 work is provisional on GO. Doing phone-independent tasks first (T14), then T10-T13 UI (build-only, unverified on device).
 - GO: continue with T08. NO-GO: stop and discuss with owner.
 
 ## Blockers / decisions needed from the owner
@@ -34,3 +34,4 @@ Last committed task: T08 (measurement engine, 49 JVM tests pass); T07 code commi
 - Hit-test: core-measure geometry/ + hit/; core-ar HitTestService. Weights/thresholds are guesses: tune after T07.
 - Spike points are plain Vec3, not anchors (drift); confidence shown as raw number, no badge label yet.
 - Engine: core-measure model/Path.kt, session/MeasurementSession.kt. Wire: listener -> StateFlow; endMove() on drag end; updatePoints(anchors) per frame; after undo/remove re-sync anchors.
+- Confidence: core-measure confidence/ConfidenceScorer.score(...) -> level/score/reason; map ARCore TrackingState to TrackingStatus in core-ar; hide number when !canDisplayNumber. Tunable: PLANE_HIGH_MIN_CONFIDENCE (0.9).
