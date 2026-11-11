@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -17,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -96,13 +94,7 @@ fun ArScreen(settingsRepository: SettingsRepository, manager: ArSessionManager, 
             AndroidView(factory = { cameraView }, modifier = Modifier.fillMaxSize())
             MeasureOverlay(measure, settingsRepository, cameraView)
         } else {
-            val text = when (val s = state) {
-                ArSessionState.NeedsInstall -> stringResource(R.string.ar_install_services)
-                ArSessionState.NeedsPermission -> stringResource(R.string.ar_permission_required)
-                is ArSessionState.Error -> stringResource(R.string.ar_error, s.message)
-                else -> stringResource(R.string.ar_idle)
-            }
-            Text(text)
+            ArStatusScreen(state, requestPermission)
         }
     }
 }

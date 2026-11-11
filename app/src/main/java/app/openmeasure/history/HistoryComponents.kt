@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -112,7 +113,7 @@ internal fun HistoryRow(item: HistoryItem, units: UnitSystem, onClick: () -> Uni
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Thumbnail(item.photoUri, item.kind, Modifier.size(56.dp))
+        Thumbnail(item.photoUri, item.kind, Modifier.size(56.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp)))
         Column(Modifier.weight(1f)) {
             Text(value, style = MaterialTheme.typography.titleMedium)
             Text("$kind · $conf", style = MaterialTheme.typography.bodyMedium)

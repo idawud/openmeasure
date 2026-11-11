@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Compose draws its own Material 3 theme; this only sets the window base. -->
-    <style name="Theme.OpenMeasure" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Compose draws its own dark Material 3 theme; this only sets the (black) window base behind the camera. -->
+    <style name="Theme.OpenMeasure" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
 </resources>

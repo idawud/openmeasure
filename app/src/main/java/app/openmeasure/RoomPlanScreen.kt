@@ -22,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -39,6 +38,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.openmeasure.history.ExportActions
+import app.openmeasure.ui.OmColors
+import app.openmeasure.ui.PillButton
 import app.openmeasure.history.RoomExport
 import app.openmeasure.measure.box.VolumeContent
 import app.openmeasure.measure.label.LabelContent
@@ -65,7 +66,7 @@ fun RoomPlanScreen(result: RoomResult, units: UnitSystem, onClose: () -> Unit) {
         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
             Column(Modifier.fillMaxSize()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onClose) { Icon(AppIcons.ArrowBack, stringResource(R.string.room_close_plan)) }
+                    IconButton(onClick = onClose) { Icon(AppIcons.ChevronBack, stringResource(R.string.room_close_plan)) }
                     Text(
                         stringResource(R.string.room_plan_title), style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.semantics { heading() },
@@ -157,16 +158,16 @@ private fun RoomActionsRow(result: RoomResult, units: UnitSystem, snackbar: Snac
     // A ceiling the scorer refused to show is left out of the export.
     val plan = if (result.labels.ceiling is LabelContent.Length) result.plan else result.plan.withCeilingHeight(null)
     FlowRow(Modifier.padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        HistorySaveButton(snackbar, enabled = candidate != null) { candidate?.toItem(null, System.currentTimeMillis()) }
+        HistorySaveButton(snackbar, enabled = candidate != null, container = OmColors.SurfaceHigh) { candidate?.toItem(null, System.currentTimeMillis()) }
         // Exports only carry numbers the user was allowed to see (displayable area).
-        OutlinedButton(
-            onClick = { share(RoomExport.SVG_MIME) { RoomExport.svg(context, plan, units) } },
-            enabled = candidate != null, modifier = Modifier.heightIn(min = 48.dp),
-        ) { Text(stringResource(R.string.room_share_svg)) }
-        OutlinedButton(
-            onClick = { share(RoomExport.PDF_MIME) { RoomExport.pdf(context, plan, units) } },
-            enabled = candidate != null, modifier = Modifier.heightIn(min = 48.dp),
-        ) { Text(stringResource(R.string.room_share_pdf)) }
+        PillButton(
+            stringResource(R.string.room_share_svg), { share(RoomExport.SVG_MIME) { RoomExport.svg(context, plan, units) } },
+            enabled = candidate != null, container = OmColors.SurfaceHigh,
+        )
+        PillButton(
+            stringResource(R.string.room_share_pdf), { share(RoomExport.PDF_MIME) { RoomExport.pdf(context, plan, units) } },
+            enabled = candidate != null, container = OmColors.SurfaceHigh,
+        )
     }
 }
 

@@ -15,7 +15,6 @@
     <string name="height_hold_still">Hold still</string>
     <string name="height_capture">Capture</string>
     <string name="height_clear">Clear</string>
-    <string name="height_captured">Captured: %1$s</string>
     <string name="spoken_height">Height, %1$s, %2$s confidence</string>
     <string name="spoken_height_captured">Captured height, %1$s</string>
     <string name="height_hint_no_person">No person found</string>
@@ -29,14 +28,11 @@
     <string name="back">Back</string>
     <string name="spoken_level">Level, %1$s off</string>
     <string name="spoken_no_level">Level reading unavailable</string>
-    <string name="measure_place_point">Place point</string>
     <string name="measure_place_point_desc">Place a measurement point at the crosshair</string>
-    <string name="measure_reset">Reset</string>
-    <string name="measure_undo">Undo</string>
+    <string name="measure_clear">Clear</string>
     <string name="measure_undo_desc">Undo the last change to the measurement</string>
     <string name="measure_done">Done</string>
     <string name="measure_new">New</string>
-    <string name="measure_total">Total %1$s</string>
     <string name="spoken_path_total">Total path length, %1$s</string>
     <string name="confidence_high">High</string>
     <string name="confidence_medium">Medium</string>
@@ -58,7 +54,6 @@
     <string name="measure_mode_desc">Measuring mode</string>
     <string name="measure_detect">Detect</string>
     <string name="measure_detect_desc">Detect a rectangle at the crosshair</string>
-    <string name="measure_place_corner">Place corner</string>
     <string name="measure_place_corner_desc">Place a rectangle corner at the crosshair</string>
     <string name="rect_detect_failed">Couldn\'t detect — tap 4 corners</string>
     <string name="rect_not_rectangular">Not a rectangle</string>
@@ -70,11 +65,9 @@
     <string name="hint_too_far">Too far away. Move closer</string>
     <string name="hint_low_depth">Surface unclear. Move closer or change angle</string>
     <string name="hint_plane_only">Measuring against a flat surface only</string>
-    <string name="coaching_move_slowly">Move your phone slowly</string>
+    <string name="coaching_move_slowly">Move your phone to start</string>
     <string name="coaching_move_slowly_desc">Move your phone slowly to scan the surface</string>
-    <string name="ar_idle">AR idle</string>
     <string name="ar_install_services">Install Google Play Services for AR</string>
-    <string name="ar_permission_required">Camera permission required</string>
     <string name="ar_error">AR error: %1$s</string>
 
     <string name="settings_title">Settings</string>
@@ -108,7 +101,6 @@
     <string name="disclaimer_title">Accuracy disclaimer</string>
     <string name="disclaimer_body">Measurements are estimates. Accuracy depends on lighting, the surface you measure, and distance. Do not use OpenMeasure for critical, legal, or structural decisions.</string>
     <string name="disclaimer_accept">I understand</string>
-    <string name="capture_label">Photo</string>
     <string name="capture_desc">Take photo with measurements</string>
     <string name="capture_saved">Saved</string>
     <string name="capture_failed">Could not save photo</string>
@@ -160,7 +152,6 @@
     <string name="room_close_desc">Close the room by joining the last corner to the first</string>
     <string name="room_skip_ceiling">Skip ceiling</string>
     <string name="room_view_plan">View plan</string>
-    <string name="room_place_ceiling">Place ceiling point</string>
     <string name="room_place_ceiling_desc">Place a point on the ceiling at the crosshair</string>
     <string name="room_preview_show">Show plan</string>
     <string name="room_preview_hide">Hide plan</string>
@@ -190,4 +181,21 @@
     <string name="room_wall_hint">Wall %1$d: %2$s</string>
     <string name="room_share_svg">Share SVG</string>
     <string name="room_share_pdf">Share PDF</string>
+    <string name="measure_total_caption">Total</string>
+    <string name="height_captured_caption">Captured</string>
+    <string name="detail_open">Show details</string>
+    <string name="detail_copy">Copy</string>
+    <string name="detail_copied">Copied</string>
+    <string name="detail_share_capture">Share capture</string>
+    <string name="detail_segment">Segment %1$d</string>
+    <string name="camera_title">Camera access needed</string>
+    <string name="camera_rationale">OpenMeasure uses the camera to measure what you point at. Nothing leaves your phone.</string>
+    <string name="camera_open_settings">Open settings</string>
+    <string name="camera_allow">Allow camera</string>
+    <string name="welcome_title">OpenMeasure</string>
+    <string name="welcome_tagline">Measure the world around you</string>
+    <string name="welcome_tip_move">Move your phone slowly</string>
+    <string name="welcome_tip_place">Tap + to place points</string>
+    <string name="welcome_tip_estimates">Estimates, not guaranteed</string>
+    <string name="welcome_continue">Continue</string>
 </resources>

@@ -20,10 +20,11 @@ fun MeasureLabelsLayer(
     fallback: ScreenPoint,
     units: UnitSystem,
     modifier: Modifier = Modifier,
+    onLabelClick: (() -> Unit)? = null,
 ) {
-    val lift = with(LocalDensity.current) { 28.dp.toPx() }
+    val lift = with(LocalDensity.current) { 30.dp.toPx() }
     Layout(
-        content = { segments.forEach { MeasureLabelView(it.label, units) } },
+        content = { segments.forEach { MeasureLabelView(it.label, units, onClick = onLabelClick) } },
         modifier = modifier,
     ) { measurables, constraints ->
         val placeables = measurables.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }

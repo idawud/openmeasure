@@ -6,6 +6,9 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +35,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import app.openmeasure.ui.Dimens
+import app.openmeasure.ui.LocalTabBarHeight
+import app.openmeasure.ui.OmColors
+import app.openmeasure.ui.OmText
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.openmeasure.R
@@ -40,8 +48,6 @@ import app.openmeasure.measure.level.LevelReading
 import app.openmeasure.measure.units.SpokenLength
 import app.openmeasure.settings.SettingsRepository
 import java.util.Locale
-
-private val LevelGreen = Color(0xFF2E7D32)
 
 @Composable
 fun LevelScreen(settingsRepository: SettingsRepository) {
@@ -72,20 +78,26 @@ fun LevelScreen(settingsRepository: SettingsRepository) {
         tone?.startTone(t, 80)
     }
 
-    val bg = if (isLevel) LevelGreen else MaterialTheme.colorScheme.background
-    val fg = if (isLevel) Color.White else MaterialTheme.colorScheme.onBackground
+    // iOS Level look: black page, big centred degrees; yellow within 2 degrees, green when level.
+    val tilt = reading?.tiltDeg
+    val accent = when {
+        isLevel -> OmColors.Success
+        tilt != null && tilt < NEAR_LEVEL_DEG -> OmColors.Accent
+        else -> Color.White
+    }
     Column(
-        modifier = Modifier.fillMaxSize().background(bg).padding(16.dp),
+        modifier = Modifier.fillMaxSize().background(OmColors.Black).windowInsetsPadding(WindowInsets.safeDrawing)
+            .padding(start = 16.dp, end = 16.dp, top = Dimens.topRowHeight, bottom = LocalTabBarHeight.current),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (!sensor.available) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.level_no_sensor), color = fg)
+                Text(stringResource(R.string.level_no_sensor), color = Color.White, style = MaterialTheme.typography.bodyLarge)
             }
             return@Column
         }
         val modeRes = if (reading?.mode == LevelMode.EDGE) R.string.level_mode_edge else R.string.level_mode_flat
-        Text(stringResource(modeRes), color = fg, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(modeRes), color = OmColors.TextSecondary, style = MaterialTheme.typography.titleMedium)
         val degreesSpoken = reading?.let { SpokenLength.speakDegrees(it.tiltDeg.toDouble()) }
         val levelDescription = if (degreesSpoken != null) {
             stringResource(R.string.spoken_level, degreesSpoken)
@@ -93,10 +105,9 @@ fun LevelScreen(settingsRepository: SettingsRepository) {
             stringResource(R.string.spoken_no_level)
         }
         Text(
-            text = reading?.let { String.format(Locale.US, "%.1fÂ°", it.tiltDeg) } ?: "--",
-            color = fg,
-            fontSize = 72.sp,
-            fontWeight = FontWeight.Bold,
+            text = reading?.let { String.format(Locale.US, "%.1f°", it.tiltDeg) } ?: "--",
+            color = accent,
+            style = OmText.sheetValue.copy(fontSize = 88.sp, lineHeight = 96.sp, fontWeight = FontWeight.Light),
             modifier = Modifier.semantics {
                 contentDescription = levelDescription
                 liveRegion = LiveRegionMode.Polite
@@ -104,23 +115,28 @@ fun LevelScreen(settingsRepository: SettingsRepository) {
         )
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (reading?.mode) {
-                LevelMode.EDGE -> EdgeBar(reading, fg)
-                LevelMode.FLAT -> FlatBubble(reading, fg)
+                LevelMode.EDGE -> EdgeBar(reading, accent)
+                LevelMode.FLAT -> FlatBubble(reading, accent)
                 null -> Unit
             }
         }
-        Text(stringResource(R.string.level_hint), color = fg, style = MaterialTheme.typography.bodySmall)
+        Text(
+            stringResource(R.string.level_hint), color = OmColors.TextSecondary, style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+        )
     }
 }
+
+private const val NEAR_LEVEL_DEG = 2f
 
 @Composable
 private fun FlatBubble(r: LevelReading, color: Color) {
     Canvas(Modifier.fillMaxSize().aspectRatio(1f)) {
         val c = center
         val radius = minOf(size.width, size.height) / 2f
-        drawCircle(color, radius, c, style = Stroke(4.dp.toPx()))
-        drawLine(color, Offset(c.x - radius, c.y), Offset(c.x + radius, c.y), 1.dp.toPx())
-        drawLine(color, Offset(c.x, c.y - radius), Offset(c.x, c.y + radius), 1.dp.toPx())
+        drawCircle(color, radius, c, style = Stroke(2.dp.toPx()))
+        drawLine(color.copy(alpha = 0.5f), Offset(c.x - radius, c.y), Offset(c.x + radius, c.y), 1.dp.toPx())
+        drawLine(color.copy(alpha = 0.5f), Offset(c.x, c.y - radius), Offset(c.x, c.y + radius), 1.dp.toPx())
         drawCircle(color, radius * 0.15f, c, style = Stroke(2.dp.toPx()))
         val travel = radius * 0.85f
         val bubble = Offset(c.x + r.bubbleX * travel, c.y - r.bubbleY * travel)

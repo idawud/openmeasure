@@ -29,10 +29,22 @@ object AppIcons {
         )
     }
 
-    /** Back arrow (already mirrored for RTL by the caller if needed). */
-    val ArrowBack: ImageVector by lazy {
-        icon("ArrowBack", "M20,11h-12.17l5.59,-5.59l-1.42,-1.41l-8,8l8,8l1.41,-1.41l-5.58,-5.59h12.17z")
+    /** Back chevron (iOS style). */
+    val ChevronBack: ImageVector by lazy { icon("ChevronBack", "M15.41,7.41L14,6l-6,6 6,6 1.41,-1.41L10.83,12z") }
+
+    /** Plus sign for the place-point button. */
+    val Plus: ImageVector by lazy { icon("Plus", "M11,5h2v6h6v2h-6v6h-2v-6H5v-2h6z") }
+
+    /** Curved undo arrow. */
+    val Undo: ImageVector by lazy {
+        icon("Undo", "M12.5,8c-2.65,0 -5.05,0.99 -6.9,2.6L2,7v9h9l-3.62,-3.62c1.39,-1.16 3.16,-1.88 5.12,-1.88 3.54,0 6.55,2.31 7.6,5.5l2.37,-0.78C21.08,11.03 17.15,8 12.5,8z")
     }
+
+    /** Diagonal bar: Line mode. */
+    val Line: ImageVector by lazy { icon("Line", "M3.5,18.1L18.1,3.5l2.4,2.4L5.9,20.5z") }
+
+    /** Wedge outline: Angle mode. */
+    val Angle: ImageVector by lazy { icon("Angle", "M3,20L3,4L20,20z M5.5,17.5L5.5,10.2L12.7,17.5z") }
 
     /** Clock with counter-clockwise arrow: History. */
     val History: ImageVector by lazy {

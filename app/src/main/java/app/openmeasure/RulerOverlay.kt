@@ -58,7 +58,7 @@ internal fun DrawScope.drawRuler(segments: List<SegmentUi>, measurer: TextMeasur
         val len = density * when (t.kind) { TickKind.MAJOR -> 14f; TickKind.MEDIUM -> 10f; TickKind.MINOR -> 6f }
         val from = Offset(t.x, t.y)
         val to = Offset(t.x + t.nx * len, t.y + t.ny * len)
-        drawLine(Color.Black, from, to, strokeWidth = 3f * density)
+        drawLine(Color(0x66000000), from, to, strokeWidth = 3f * density)
         drawLine(Color.White, from, to, strokeWidth = 1.5f * density)
         val text = t.label ?: continue
         val m = measurer.measure(text, style)
@@ -67,7 +67,7 @@ internal fun DrawScope.drawRuler(segments: List<SegmentUi>, measurer: TextMeasur
         val reach = len + 4f * density + abs(t.nx) * w / 2f + abs(t.ny) * h / 2f
         val cx = (t.x + t.nx * reach).coerceIn(w / 2f, maxOf(w / 2f, size.width - w / 2f))
         val cy = (t.y + t.ny * reach).coerceIn(h / 2f, maxOf(h / 2f, size.height - h / 2f))
-        drawRect(Color(0xCC000000), Offset(cx - w / 2f - 3f, cy - h / 2f), Size(w + 6f, h))
+        drawRoundRect(Color(0xB3000000), Offset(cx - w / 2f - 4f * density, cy - h / 2f), Size(w + 8f * density, h), androidx.compose.ui.geometry.CornerRadius(h / 2f))
         drawText(m, topLeft = Offset(cx - w / 2f, cy - h / 2f))
     }
 }

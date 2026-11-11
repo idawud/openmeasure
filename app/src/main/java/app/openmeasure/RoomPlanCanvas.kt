@@ -30,9 +30,9 @@ import app.openmeasure.measure.units.UnitSystem
 /** Colours for [PlanCanvas]; dark defaults suit the camera overlay. */
 data class PlanColors(
     val wall: Color = Color.White,
-    val fill: Color = Color(0x33FFEB3B),
+    val fill: Color = Color(0x33FFD60A),
     val text: Color = Color.White,
-    val labelBg: Color = Color(0xCC000000),
+    val labelBg: Color = Color(0xB3000000),
 )
 
 /**
@@ -108,8 +108,4 @@ fun PlanCanvas(
     }
 }
 
-internal fun levelColour(level: ConfidenceLevel): Color = when (level) {
-    ConfidenceLevel.HIGH -> BadgeGreen
-    ConfidenceLevel.MEDIUM -> BadgeYellow
-    else -> BadgeRed
-}
+internal fun levelColour(level: ConfidenceLevel): Color = confidenceColor(level)

@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-11
 Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: T30 + lint fix (301 JVM tests pass, lint 0 errors/9 warnings). ALL tasks T01-T32 built except T07 + T22 (need phone). Next: phone tests below.
+Last committed task: post-T32 fixes: 16 KB libs (Filament removed, ML Kit pose 18.0.0-beta5), drift fix (world anchors + AnchorPoseFilter + ReticleSmoother), iPhone-style UI redesign (app/ui/). Open: T07, T22. All unverified on device after redesign.
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step
@@ -29,11 +29,12 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   13. T32 export: share CSV into spreadsheet, PDF into viewer (A4, multipage, thumbnails, missing photo ok); item share with/without photo.
   14. T29 box: W,D,H each <=1 cm on a known carton, all sides, H label placement, v1->v2 upgrade keeps history; not-level flag = spread > max(3 cm, 3%).
   15. T30 room: known room <=1 cm per 1 m wall; mini plan placement on narrow phones; plan screen rotate/split; SVG/PDF open in share targets; TalkBack summary.
+  16. NEW: install -> no 16 KB dialog; welcome screen then camera permission; placed points stay put (adb logcat -s OpenMeasureDrift, shown <2 mm still); redesign look: pills, +, tabs, mode picker, detail sheet; Height (ML Kit beta) still works.
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
 - Versions: Gradle 9.9.1, AGP 9.5.1, Kotlin 2.4.21, Compose BOM 2026.09.00; core-measure pins jvmTarget 17.
-- Deps (reasons): ARCore 1.57.0; Filament 1.77.3 (core-ar, unused); ML Kit pose-detection 17.0.0 (core-ar; height);
+- Deps (reasons): ARCore 1.57.0; ML Kit pose-detection 18.0.0-beta5 (core-ar; height; 17.0.0 had unaligned 16KB libxeno_native);
   Room 2.8.5 + KSP 2.3.13 (data); kotlinx-coroutines-android 1.10.2 (StateFlow). No other deps.
 - Hit-test/confidence tunables are guesses (PLANE_HIGH_MIN_CONFIDENCE 0.9, snap thresholds): tune after T07/T22.
 - Crash logs local-only (filesDir/crashes), gated by analytics opt-out. Lint leftovers in docs/RELEASE_CHECKLIST.md.
