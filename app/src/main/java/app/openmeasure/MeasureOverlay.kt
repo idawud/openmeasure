@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -29,12 +30,14 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.openmeasure.measure.coaching.CoachingState
+import app.openmeasure.measure.snap.SnapKind
 import app.openmeasure.settings.SettingsRepository
 
 /** Camera overlay: crosshair, placed points, line, live label, "+" and reset buttons. */
@@ -49,6 +52,15 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     val placedPoints = s.pointCount
     LaunchedEffect(placedPoints) {
         if (placedPoints >= 2 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
+    }
+    // F8: settings -> GL thread; haptic tick only on snap acquire.
+    val snapRadiusPx = with(LocalDensity.current) { SNAP_RADIUS.toPx() }
+    SideEffect {
+        controller.snapEnabled = settings.snapEnabled
+        controller.snapRadiusPx = snapRadiusPx
+    }
+    LaunchedEffect(s.snapTick) {
+        if (s.snapTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -80,11 +92,19 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 drawCircle(Color.Black, 9.dp.toPx() + grown, Offset(d.x, d.y))
                 drawCircle(Color.White, 6.dp.toPx() + grown, Offset(d.x, d.y))
             }
+            val snap = s.snapPoint?.takeIf { s.snapKind != SnapKind.NONE }
             if (ready) {
                 val c = Offset(size.width / 2, size.height / 2)
-                drawCircle(Color.Green, radius = 18f, center = c, style = Stroke(3f))
-                drawCircle(Color.Green, radius = 3f, center = c)
+                if (snap != null && s.draggingId == null) {
+                    // Snapped: small crosshair stays at the aim point, the marker shows where the point goes.
+                    drawLine(Color.White, c, Offset(snap.x, snap.y), strokeWidth = 1.5.dp.toPx())
+                    drawCircle(Color.White, radius = 3f, center = c)
+                } else {
+                    drawCircle(Color.Green, radius = 18f, center = c, style = Stroke(3f))
+                    drawCircle(Color.Green, radius = 3f, center = c)
+                }
             }
+            if (snap != null) drawSnapMarker(s.snapKind, snap)
         }
         if (s.segments.isNotEmpty()) {
             // Last placed dot anchors a label when its segment is off screen (e.g. no hit yet).
@@ -96,6 +116,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             PathTotalChip(it, settings.unitSystem, Modifier.align(Alignment.TopCenter).padding(top = 24.dp))
         }
         }
+        if (ready || s.draggingId != null) SnapLabel(s.snapKind, s.snapPoint)
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
         // Narrow or short windows (split screen, landscape): capture moves to the top-end corner and
         // the place button joins the action row so controls never overlap.
@@ -144,3 +165,6 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
         }
     }
 }
+
+/** Max on-screen distance a point may be pulled by snapping. */
+private val SNAP_RADIUS = 24.dp

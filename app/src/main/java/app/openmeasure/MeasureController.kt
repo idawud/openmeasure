@@ -4,6 +4,7 @@ import app.openmeasure.ar.ArCameraView
 import app.openmeasure.ar.ArHit
 import app.openmeasure.ar.ArSessionManager
 import app.openmeasure.ar.HitTestService
+import app.openmeasure.ar.SnapService
 import app.openmeasure.measure.coaching.CoachingState
 import app.openmeasure.measure.coaching.CoachingTracker
 import app.openmeasure.measure.confidence.EndpointObservation
@@ -18,6 +19,8 @@ import app.openmeasure.measure.projection.ScreenPoint
 import app.openmeasure.measure.projection.ScreenProjection
 import app.openmeasure.measure.projection.ScreenSegment
 import app.openmeasure.measure.session.MeasurementSession
+import app.openmeasure.measure.snap.SnapHysteresis
+import app.openmeasure.measure.snap.SnapKind
 import com.google.ar.core.Anchor
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
@@ -44,7 +47,20 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private var draggingId: PointId? = null
     private var dragHit: ArHit? = null
 
+    /** Settings "Snap to edges"; read on the GL thread every frame. */
+    @Volatile var snapEnabled: Boolean = true
+    /** Max snap distance in view pixels (set from dp by the UI). Snapped points never move farther. */
+    @Volatile var snapRadiusPx: Float = 60f
+
     private val service = HitTestService()
+    private val snapService = SnapService(service.depthSource)
+    private var reticleSnap = newHysteresis()
+    private var dragSnap = newHysteresis()
+    private var hystRadius = snapRadiusPx
+    private var dragSnapKind = SnapKind.NONE
+    private var dragSnapPoint: ScreenPoint? = null
+    private var snapTick = 0
+
     private val coachingTracker = CoachingTracker()
     private val session = MeasurementSession()
     private var finished = false
@@ -129,11 +145,32 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         hits[id] = hit.result
     }
 
+    /** Release snaps at the max radius and acquire only well inside it, so a held target never exceeds it. */
+    private fun newHysteresis(): SnapHysteresis {
+        val r = snapRadiusPx.coerceAtLeast(1f)
+        return SnapHysteresis(acquireRadiusPx = r * 0.6f, releaseRadiusPx = r)
+    }
+
+    /** Applies snapping (if enabled) to [base] hit at view (x, y); counts acquire ticks for haptics. */
+    private fun snapped(frame: Frame, x: Float, y: Float, base: ArHit, hyst: SnapHysteresis): SnapService.Outcome {
+        if (!snapEnabled) {
+            hyst.reset()
+            return SnapService.Outcome(base, SnapKind.NONE, false, null)
+        }
+        val out = snapService.snap(frame, x, y, base, hyst, view.width, view.height, snapRadiusPx)
+        if (out.acquired) snapTick++
+        return out
+    }
+
     private fun applyDrag(frame: Frame, status: TrackingStatus) {
-        val d = dragTarget ?: return
-        if (draggingId != d.id) { draggingId = d.id; dragHit = null }
+        val d = dragTarget
+        if (d == null) { dragSnap.reset(); dragSnapKind = SnapKind.NONE; dragSnapPoint = null; return }
+        if (draggingId != d.id) { draggingId = d.id; dragHit = null; dragSnap.reset() }
         if (status != TrackingStatus.TRACKING) return
-        val hit = service.hitTest(frame, d.x, d.y)
+        val snap = snapped(frame, d.x, d.y, service.hitTest(frame, d.x, d.y), dragSnap)
+        dragSnapKind = snap.kind
+        dragSnapPoint = snap.screen
+        val hit = snap.hit
         val pos = hit.result.position ?: return
         if (session.movePoint(d.id, pos, hit.result.confidence)) {
             dragHit = hit
@@ -153,7 +190,13 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         }
         val w = view.width.toFloat()
         val h = view.height.toFloat()
-        val liveHit: ArHit = service.hitTestCenter(frame, view.width, view.height)
+        if (hystRadius != snapRadiusPx) {
+            hystRadius = snapRadiusPx
+            reticleSnap = newHysteresis()
+            dragSnap = newHysteresis()
+        }
+        val liveSnap = snapped(frame, w / 2f, h / 2f, service.hitTestCenter(frame, view.width, view.height), reticleSnap)
+        val liveHit: ArHit = liveSnap.hit
         val live = liveHit.result
         val coaching = coachingTracker.update(System.nanoTime() / 1_000_000, status, live)
 
@@ -210,6 +253,9 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             canAdd = pts.size < PathTotal.MAX_POINTS,
             canUndo = session.state.canUndo,
             draggingId = draggingId,
+            snapKind = if (draggingId != null) dragSnapKind else liveSnap.kind,
+            snapPoint = if (draggingId != null) dragSnapPoint else liveSnap.screen,
+            snapTick = snapTick,
         )
     }
 

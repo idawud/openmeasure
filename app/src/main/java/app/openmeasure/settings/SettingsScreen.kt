@@ -70,6 +70,14 @@ fun SettingsScreen(repository: SettingsRepository, onBack: () -> Unit) {
                 onSelect = { repository.setUnitSystem(UnitSystem.IMPERIAL) },
             )
 
+            SectionHeader(stringResource(R.string.settings_measuring))
+            ToggleRow(
+                title = stringResource(R.string.settings_snap),
+                description = stringResource(R.string.settings_snap_desc),
+                checked = settings.snapEnabled,
+                onCheckedChange = repository::setSnapEnabled,
+            )
+
             SectionHeader(stringResource(R.string.settings_feedback))
             ToggleRow(
                 title = stringResource(R.string.settings_haptics),

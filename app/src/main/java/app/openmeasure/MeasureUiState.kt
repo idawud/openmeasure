@@ -5,6 +5,7 @@ import app.openmeasure.measure.label.LabelContent
 import app.openmeasure.measure.model.PointId
 import app.openmeasure.measure.projection.ScreenPoint
 import app.openmeasure.measure.projection.ScreenSegment
+import app.openmeasure.measure.snap.SnapKind
 
 /** One drawn line with its label; [live] = last placed point to the reticle. Numbers only inside Length. */
 data class SegmentUi(val segment: ScreenSegment?, val label: LabelContent, val live: Boolean)
@@ -27,4 +28,10 @@ data class MeasureUiState(
     val canUndo: Boolean = false,
     /** Point currently being dragged, if any. */
     val draggingId: PointId? = null,
+    /** Active snap (drag if dragging, else reticle); shown as shape + text, never colour alone. */
+    val snapKind: SnapKind = SnapKind.NONE,
+    /** Where the snapped point is on screen (view pixels), null when not snapped. */
+    val snapPoint: ScreenPoint? = null,
+    /** Increments on every snap acquire; the UI ticks haptics when it changes. */
+    val snapTick: Int = 0,
 )

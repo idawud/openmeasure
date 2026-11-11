@@ -43,6 +43,11 @@
     <string name="settings_units">Units</string>
     <string name="units_metric">Metric</string>
     <string name="units_imperial">Imperial</string>
+    <string name="settings_measuring">Measuring</string>
+    <string name="settings_snap">Snap to edges</string>
+    <string name="settings_snap_desc">Pull points onto nearby edges and corners</string>
+    <string name="measure_snap_edge">Edge</string>
+    <string name="measure_snap_corner">Corner</string>
     <string name="settings_feedback">Feedback</string>
     <string name="settings_haptics">Haptics</string>
     <string name="settings_haptics_desc">Vibrate on taps and measurements</string>
