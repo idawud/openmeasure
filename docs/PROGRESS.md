@@ -6,7 +6,10 @@ Last committed task: post-T32 fixes: 16 KB libs (Filament removed, ML Kit pose 1
 Everything since T05 is compiled + JVM-tested only, never run on a device.
 
 ## Next step
-- Next unticked after T27: see docs/TASKS.md. Phone results (below) gate T07 GO/NO-GO and T22; NO-GO = stop and ask.
+- ACTIVE (2026-11-18, owner field bugs): Phase 4 T33-T36 in docs/TASKS.md, in order, one commit each. Plan: (T33) solid white line, no ruler ticks/dashes;
+  (T34) surface-fused plane hit (fit plane to bigger depth patch, smooth plane in world space, intersect current ray) + near-range confidence falloff, fixes close-range/moving error;
+  (T35) place from the hit ~120 ms before the tap + reject high camera speed (taps shake the phone; fixes flaky marks); (T36) debug log. No ML model needed.
+- After Phase 4: next unticked in docs/TASKS.md. Phone results (below) gate T07 GO/NO-GO and T22; NO-GO = stop and ask.
 
 ## Blockers / decisions needed from the owner
 - No device connected (adb devices empty). Connect Pixel 8 Pro (USB debugging), then `./gradlew installDebug`.
@@ -38,3 +41,4 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   Room 2.8.5 + KSP 2.3.13 (data); kotlinx-coroutines-android 1.10.2 (StateFlow). No other deps.
 - Hit-test/confidence tunables are guesses (PLANE_HIGH_MIN_CONFIDENCE 0.9, snap thresholds): tune after T07/T22.
 - Crash logs local-only (filesDir/crashes), gated by analytics opt-out. Lint leftovers in docs/RELEASE_CHECKLIST.md.
+- Close-range accuracy reports: `adb logcat -s OpenMeasureMeasure OpenMeasureDrift` (debug builds only).

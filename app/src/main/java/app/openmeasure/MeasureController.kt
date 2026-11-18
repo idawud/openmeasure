@@ -33,6 +33,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private val service = HitTestService()
     private val session = MeasurementSession()
     private val anchors = AnchorStore(manager, session, debugLog = isDebuggable(view.context))
+    private val mlog = MeasureLog(enabled = isDebuggable(view.context))
     private val smoother = ReticleSmoother()
     private val snapper = Snapper(service, view)
     private val drag = DragController(manager, session, anchors, service, snapper)
@@ -221,13 +222,13 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private fun placeFromBuffer(nowMs: Long, liveHit: ArHit) {
         val pick = buffer.pick(nowMs)
         when {
-            pick != null -> place(pick.value.hit, pick.value.aligned)
+            pick != null -> place(pick.value.hit, pick.value.aligned, fromBuffer = true)
             buffer.isSteady() -> place(liveHit, lockedEnd)
             else -> tooFastTick++
         }
     }
 
-    private fun place(hit: ArHit, aligned: Vec3? = null) {
+    private fun place(hit: ArHit, aligned: Vec3? = null, fromBuffer: Boolean = false) {
         val sess = manager.session ?: return
         val pos = aligned ?: hit.result.position ?: return
         if (finished || (rect.active && session.state.points.size >= MeasureFrame.RECT_CORNERS) ||
@@ -242,6 +243,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val anchor = (if (aligned != null) anchors.createAt(pos) else hit.createAnchor(sess)) ?: return
         val id = session.addPoint(pos, hit.result.confidence)
         anchors.put(id, anchor, hit.result)
+        mlog.placed(id, hit.result, pos, fromBuffer, buffer.currentSpeed, session.state.points)
     }
 
     private companion object {
