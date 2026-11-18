@@ -30,6 +30,9 @@ class DepthHitTester(
     val zeroConfidenceRangeM: Float = 6.0f,
     /** Sensor-confidence factor used when no confidence image is available. */
     val unknownSensorConfidence: Float = 0.7f,
+    /** Near-range falloff: confidence is 0 below [nearZeroM] and 1 from [nearFullM] up. */
+    val nearZeroM: Float = 0.15f,
+    val nearFullM: Float = 0.35f,
 ) {
 
     /**
@@ -78,6 +81,33 @@ class DepthHitTester(
         return PatchStats(median, mad, validFraction, inliers.toFloat() / total, meanConf)
     }
 
+    /**
+     * Patch points in world space for surface fitting: every valid depth sample (within
+     * minDepthMm..maxDepthMm) in the (2*[radius]+1)^2 patch around (u, v), clipped to the image.
+     * Null if the centre is out of bounds or no sample is valid.
+     */
+    fun patchPoints(
+        depth: DepthMap,
+        intrinsics: CameraIntrinsics,
+        u: Float,
+        v: Float,
+        cameraPose: Pose,
+        radius: Int = 6,
+    ): List<Vec3>? {
+        val cx = u.roundToInt()
+        val cy = v.roundToInt()
+        if (cx !in 0 until depth.width || cy !in 0 until depth.height) return null
+        val out = ArrayList<Vec3>((2 * radius + 1) * (2 * radius + 1))
+        for (y in maxOf(0, cy - radius)..minOf(depth.height - 1, cy + radius)) {
+            for (x in maxOf(0, cx - radius)..minOf(depth.width - 1, cx + radius)) {
+                val d = depth.depthAt(x, y)
+                if (d !in minDepthMm..maxDepthMm) continue
+                out += cameraPose.transformPoint(unprojectToCamera(intrinsics, x.toFloat(), y.toFloat(), d / 1000f))
+            }
+        }
+        return if (out.isEmpty()) null else out
+    }
+
     /** 0..1 product of independent quality factors. */
     fun confidence(depthM: Float, madM: Float, inlierFraction: Float, meanConfidence01: Float?): Float {
         if (depthM <= 0f) return 0f
@@ -86,7 +116,9 @@ class DepthHitTester(
         val dist = clamp01(1f - (depthM - fullConfidenceRangeM) / (zeroConfidenceRangeM - fullConfidenceRangeM))
         // Raw-depth confidence is sparse (0 where no estimate); sqrt softens mid-range values.
         val sensor = meanConfidence01?.let { sqrt(clamp01(it)) } ?: unknownSensorConfidence
-        return clamp01(spread * dist * clamp01(inlierFraction) * sensor)
+        // Near-range falloff: ARCore depth is unreliable inside ~35 cm.
+        val near = clamp01((depthM - nearZeroM) / (nearFullM - nearZeroM))
+        return clamp01(spread * dist * clamp01(inlierFraction) * sensor * near)
     }
 
     data class PatchStats(

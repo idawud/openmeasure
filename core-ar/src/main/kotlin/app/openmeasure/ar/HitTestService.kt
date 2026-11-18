@@ -8,6 +8,7 @@ import app.openmeasure.measure.hit.DepthHitTester
 import app.openmeasure.measure.hit.HitResolver
 import app.openmeasure.measure.hit.HitResult
 import app.openmeasure.measure.hit.PlaneHit
+import app.openmeasure.measure.hit.SurfaceFuser
 import com.google.ar.core.Anchor
 import com.google.ar.core.Frame
 import com.google.ar.core.Plane
@@ -45,15 +46,23 @@ class HitTestService(
     /** Share one instance with [SnapService] so depth is copied once per frame. */
     val depthSource: FrameDepthSource = FrameDepthSource(),
 ) {
+    /** Surface fit across frames for the centre reticle only (drag hits stay single-frame). */
+    private val surfaceFuser = SurfaceFuser()
+
     fun hitTestCenter(frame: Frame, viewWidth: Int, viewHeight: Int): ArHit =
-        hitTest(frame, viewWidth / 2f, viewHeight / 2f)
+        hitTestInternal(frame, viewWidth / 2f, viewHeight / 2f, fuse = true)
 
     /** [x], [y] in view pixels (same space as touch events / the GLSurfaceView). */
-    fun hitTest(frame: Frame, x: Float, y: Float): ArHit {
+    fun hitTest(frame: Frame, x: Float, y: Float): ArHit = hitTestInternal(frame, x, y, fuse = false)
+
+    private fun hitTestInternal(frame: Frame, x: Float, y: Float, fuse: Boolean): ArHit {
         val camera = frame.camera
-        if (camera.trackingState != TrackingState.TRACKING) return ArHit(HitResult.NONE, null)
+        if (camera.trackingState != TrackingState.TRACKING) {
+            if (fuse) surfaceFuser.reset()
+            return ArHit(HitResult.NONE, null)
+        }
         val camPose = camera.pose.toPose()
-        val depthHit = depthHit(frame, x, y, camPose)
+        val depthHit = depthHit(frame, x, y, camPose, fuse)
         val arPlaneHit = planeHit(frame, x, y)
         val result = resolver.resolve(
             isTracking = true,
@@ -64,10 +73,32 @@ class HitTestService(
         return ArHit(result, arPlaneHit)
     }
 
-    private fun depthHit(frame: Frame, x: Float, y: Float, camPose: Pose): DepthHit? {
-        val fd = depthSource.get(frame) ?: return null
+    private fun depthHit(frame: Frame, x: Float, y: Float, camPose: Pose, fuse: Boolean): DepthHit? {
+        val fd = depthSource.get(frame)
+        if (fd == null) {
+            if (fuse) surfaceFuser.reset()
+            return null
+        }
         val (u, v) = depthSource.viewToDepthPixel(frame, fd, x, y)
-        return depthTester.hitTest(fd.map, fd.intrinsics, u, v, camPose)
+        val raw = depthTester.hitTest(fd.map, fd.intrinsics, u, v, camPose)
+        if (!fuse) return raw
+        if (raw == null) {
+            surfaceFuser.reset()
+            return null
+        }
+        val cam = camPose.translation
+        val toHit = raw.position - cam
+        val len = toHit.length()
+        if (len < 1e-4f) return raw
+        val points = depthTester.patchPoints(fd.map, fd.intrinsics, u, v, camPose)
+        val fused = surfaceFuser.update(cam, toHit * (1f / len), points, DEPTH_KEY, raw.position) ?: return raw
+        // Keep confidence; depth is camera z-depth (matches DepthHit.depthM semantics).
+        val forward = camPose.rotateVector(Vec3(0f, 0f, -1f))
+        return raw.copy(position = fused, depthM = (fused - cam) dot forward)
+    }
+
+    private companion object {
+        const val DEPTH_KEY = "DEPTH"
     }
 
     /** First tracked plane hit whose pose lies inside the plane polygon. */
