@@ -46,3 +46,10 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T30 [opus] Room scan to floor plan (F15).
 - [x] T31 [sonnet] Angle tool (F16).
 - [x] T32 [haiku] Export CSV/PDF (F17).
+
+## Phase 4 — Field fixes (owner report 2026-11-18)
+
+- [x] T33 [haiku] Remove ruler tick marks; every line (live + placed) is a solid white line like iPhone Measure (no dashes, no ticks, drop the "Ruler ticks" setting).
+- [ ] T34 [haiku] Surface-fused hit (accuracy): in `core-measure/hit` add `SurfaceFuser`: fit a plane to a larger depth patch (radius ~6 px, RANSAC/inlier trim, `PlaneAccumulator` exists in rect/PlaneFit.kt), smooth the plane (normal+offset) across frames in WORLD space, and return current-ray ∩ fused plane. Use it in `HitTestService` for DEPTH hits (fallback to median when fit fails/near-edge). Add near-range (<0.35 m) confidence falloff in `DepthHitTester`. Unit tests (JVM, synthetic slanted plane + noise; moving camera).
+- [ ] T35 [haiku] Steadier point placement: ring buffer of recent live hits in MeasureController; `place()` uses the hit from ~120 ms before the tap (button press shakes the phone), skipping frames whose camera speed is high; refuse placement while speed > threshold (coaching MOVE_SLOWLY). Tighten snap radius in metres at close range. Tests for the buffer logic in core-measure (`PlacementBuffer`).
+- [ ] T36 [haiku] Debug-only measurement log (tag OpenMeasureMeasure: source, depth m, conf, tracking, camera speed per placed point) so owner can send logcat if close-range error persists.

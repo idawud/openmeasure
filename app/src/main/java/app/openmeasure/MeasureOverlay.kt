@@ -67,7 +67,6 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     SideEffect {
         controller.snapEnabled = settings.snapEnabled
         controller.guideEnabled = settings.guideEnabled
-        controller.rulerUnits = if (settings.rulerEnabled) settings.unitSystem else null
         controller.snapRadiusPx = snapRadiusPx
     }
     LaunchedEffect(s.snapTick) {
@@ -76,7 +75,6 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     LaunchedEffect(s.guideTick) {
         if (s.guideTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
-    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     val snackbar = remember { SnackbarHostState() }
     // F15: the floor plan opens automatically when the room is done, as a snapshot (stable while tracking changes).
@@ -117,7 +115,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                 Modifier.fillMaxSize().pointDragInput(stateHolder, controller) {
                     if (settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 },
-            ) { drawMeasureScene(s, ready, textMeasurer, reticleColor, pulse) }
+            ) { drawMeasureScene(s, ready, reticleColor, pulse) }
             if (s.segments.isNotEmpty()) {
                 // Last placed dot anchors a label when its segment is off screen (e.g. no hit yet).
                 val fallback = s.dots.lastOrNull { it != null } ?: app.openmeasure.measure.projection.ScreenPoint(0f, 0f)

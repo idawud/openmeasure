@@ -51,8 +51,6 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         set(v) { snapper.radiusPx = v }
     /** Settings "Guide lines" (F12): references + lock to level/plumb while placing the next point in line mode. */
     @Volatile var guideEnabled: Boolean = true
-    /** Units for F13 ruler ticks; null = ticks off. */
-    @Volatile var rulerUnits: app.openmeasure.measure.units.UnitSystem? = null
 
     private val guide = GuideController()
     private var lockedEnd: Vec3? = null
@@ -176,7 +174,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val roomFrame = if (room.active) room.build(pts, live, observe, fv) else null
         val built = boxFrame?.let { FrameSegments(it.segments, emptyList()) }
             ?: roomFrame?.let { FrameSegments(it.segments, emptyList()) }
-            ?: MeasureFrame.build(pts, finished || angleDone, rect.active, live, rulerUnits, observe, fv)
+            ?: MeasureFrame.build(pts, finished || angleDone, rect.active, live, observe, fv)
         val dragging = drag.draggingId != null
         _state.value = MeasureUiState(
             coaching, dots, pts.map { it.id }, built.segments, if (angle.active || box.active || room.active) null else PathTotal.of(built.placed), pts.size, finished,
