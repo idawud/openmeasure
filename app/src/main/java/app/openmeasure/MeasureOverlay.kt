@@ -40,7 +40,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.openmeasure.ar.ArCameraView
 import app.openmeasure.measure.coaching.CoachingState
-import app.openmeasure.measure.guide.GuideState
 import app.openmeasure.measure.snap.SnapKind
 import app.openmeasure.settings.SettingsRepository
 import app.openmeasure.ui.Dimens
@@ -66,14 +65,10 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     val snapRadiusPx = with(LocalDensity.current) { SNAP_RADIUS.toPx() }
     SideEffect {
         controller.snapEnabled = settings.snapEnabled
-        controller.guideEnabled = settings.guideEnabled
         controller.snapRadiusPx = snapRadiusPx
     }
     LaunchedEffect(s.snapTick) {
         if (s.snapTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
-    }
-    LaunchedEffect(s.guideTick) {
-        if (s.guideTick > 0 && settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
     }
     val layer = androidx.compose.ui.graphics.rememberGraphicsLayer()
     val snackbar = remember { SnackbarHostState() }
@@ -91,7 +86,7 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
     val candidate = s.save
     val saver = rememberHistorySaver(snackbar, cameraView to layer) { uri -> candidate?.toItem(uri, System.currentTimeMillis()) }
     val controls = MeasureControls(s, controller, ready, settings.hapticsEnabled, capture, saver)
-    val aligned = (s.snapKind != SnapKind.NONE && s.snapPoint != null) || (s.guide?.state ?: GuideState.NONE) != GuideState.NONE
+    val aligned = s.snapKind != SnapKind.NONE && s.snapPoint != null
     val reticleColor = animateColorAsState(if (aligned) OmColors.Accent else Color.White, tween(150), label = "reticleColor")
     val pulse: State<Float> = if (rememberReduceMotion()) remember { mutableStateOf(1f) } else {
         rememberInfiniteTransition(label = "reticle").animateFloat(
@@ -134,7 +129,6 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
             RoomMiniPlan(it, units, Modifier.align(Alignment.TopStart).windowInsetsPadding(WindowInsets.safeDrawing).padding(start = 8.dp, top = 112.dp))
         }
         DetectFailHint(s.detectFailTick, below)
-        s.guide?.takeIf { ready }?.let { GuideChip(it.state, Modifier.align(Alignment.Center).padding(top = 72.dp)) }
         if (ready || s.draggingId != null) SnapLabel(s.snapKind, s.snapPoint)
         if (!ready) CoachingHint(Modifier.align(Alignment.Center))
 

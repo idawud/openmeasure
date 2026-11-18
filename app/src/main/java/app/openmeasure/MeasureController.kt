@@ -51,13 +51,8 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     var snapRadiusPx: Float
         get() = snapper.radiusPx
         set(v) { snapper.radiusPx = v }
-    /** Settings "Guide lines" (F12): references + lock to level/plumb while placing the next point in line mode. */
-    @Volatile var guideEnabled: Boolean = true
-
-    private val guide = GuideController()
-    private var lockedEnd: Vec3? = null
     private val coachingTracker = CoachingTracker()
-    private val buffer = PlacementBuffer<Candidate>()
+    private val buffer = PlacementBuffer<ArHit>()
     private var tooFastTick = 0
     private var finished = false
     private val pendingDone = AtomicBoolean(false)
@@ -150,19 +145,13 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         // Raw per-frame depth is noisy along the ray; smooth it so the point lands where the reticle visibly was.
         // Plane hits (ray-plane intersection) and edge snaps (own hysteresis) are already stable.
         val liveHit: ArHit = smoothed(liveSnap, camPos, status)
-        var live = liveHit.result
+        val live = liveHit.result
         frame.camera.getViewMatrix(viewM, 0)
         frame.camera.getProjectionMatrix(projM, 0, NEAR, FAR)
         val fv = FrameView(viewM, projM, w, h, camPos, status)
-        // F12: when aligned, the live end becomes its level/plumb projection so lengths are the true horizontal/vertical distance.
-        val boxDone = box.active && session.state.points.size >= BoxModeController.POINTS
-        val start = if (rect.active || angle.active || room.active || finished || boxDone) null else session.state.points.lastOrNull()?.position
-        val g = guide.update(start, live.position, guideEnabled && status == TrackingStatus.TRACKING, fv)
-        lockedEnd = if (g != null && g.locked) g.end else null
-        lockedEnd?.let { live = live.copy(position = it) }
         // T35: keep recent hits so a tap places the point the user aimed at, not the hit after the phone shook.
         val nowMs = System.nanoTime() / 1_000_000
-        buffer.record(nowMs, camPos, liveHit.takeIf { it.result.isHit }?.let { Candidate(it, lockedEnd) })
+        buffer.record(nowMs, camPos, liveHit.takeIf { it.result.isHit })
         val coaching = coachingTracker.update(nowMs, status, live)
 
         if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) placeFromBuffer(nowMs, liveHit)
@@ -192,8 +181,6 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             snapKind = if (dragging) drag.snapKind else liveSnap.kind,
             snapPoint = if (dragging) drag.snapPoint else liveSnap.screen,
             snapTick = snapper.tick,
-            guide = g?.ui,
-            guideTick = guide.acquireTick,
             rectMode = rect.active,
             angleMode = angle.active,
             angle = angle.build(pts, observe, fv),
@@ -222,15 +209,15 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private fun placeFromBuffer(nowMs: Long, liveHit: ArHit) {
         val pick = buffer.pick(nowMs)
         when {
-            pick != null -> place(pick.value.hit, pick.value.aligned, fromBuffer = true)
-            buffer.isSteady() -> place(liveHit, lockedEnd)
+            pick != null -> place(pick.value, fromBuffer = true)
+            buffer.isSteady() -> place(liveHit)
             else -> tooFastTick++
         }
     }
 
-    private fun place(hit: ArHit, aligned: Vec3? = null, fromBuffer: Boolean = false) {
+    private fun place(hit: ArHit, fromBuffer: Boolean = false) {
         val sess = manager.session ?: return
-        val pos = aligned ?: hit.result.position ?: return
+        val pos = hit.result.position ?: return
         if (finished || (rect.active && session.state.points.size >= MeasureFrame.RECT_CORNERS) ||
             (angle.active && session.state.points.size >= AngleModeController.POINTS) ||
             (box.active && session.state.points.size >= BoxModeController.POINTS)) clearAll()
@@ -240,7 +227,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             RoomModeController.PlaceAction.ADD -> Unit
         }
         if (session.state.points.size >= PathTotal.MAX_POINTS) return
-        val anchor = (if (aligned != null) anchors.createAt(pos) else hit.createAnchor(sess)) ?: return
+        val anchor = hit.createAnchor(sess) ?: return
         val id = session.addPoint(pos, hit.result.confidence)
         anchors.put(id, anchor, hit.result)
         mlog.placed(id, hit.result, pos, fromBuffer, buffer.currentSpeed, session.state.points)
@@ -255,6 +242,3 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             (ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 }
-
-/** One buffered frame's placement candidate: the hit plus its level/plumb-aligned end (if aligned). */
-private data class Candidate(val hit: ArHit, val aligned: Vec3?)

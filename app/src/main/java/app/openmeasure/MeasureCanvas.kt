@@ -17,7 +17,6 @@ internal fun DrawScope.drawMeasureScene(
     reticleColor: State<Color>,
     pulse: State<Float>,
 ) {
-    s.guide?.let { drawGuides(it) }
     s.box?.let { drawBoxEdges(it) }
     s.room?.let { drawRoomEdges(it) }
     s.segments.forEach { su ->
