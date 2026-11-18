@@ -14,6 +14,7 @@ import app.openmeasure.measure.snap.SnapKind
 import app.openmeasure.measure.label.PathTotal
 import app.openmeasure.measure.model.PointId
 import app.openmeasure.measure.session.MeasurementSession
+import app.openmeasure.measure.session.PlacementBuffer
 import com.google.ar.core.Frame
 import com.google.ar.core.TrackingState
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -55,6 +56,8 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private val guide = GuideController()
     private var lockedEnd: Vec3? = null
     private val coachingTracker = CoachingTracker()
+    private val buffer = PlacementBuffer<Candidate>()
+    private var tooFastTick = 0
     private var finished = false
     private val pendingDone = AtomicBoolean(false)
     private val pendingPlace = AtomicBoolean(false)
@@ -123,6 +126,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
     private fun clearAll() {
         drag.cancel()
         session.clear()
+        buffer.clear()
         anchors.sync()
         room.reset()
         finished = false
@@ -155,9 +159,12 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         val g = guide.update(start, live.position, guideEnabled && status == TrackingStatus.TRACKING, fv)
         lockedEnd = if (g != null && g.locked) g.end else null
         lockedEnd?.let { live = live.copy(position = it) }
-        val coaching = coachingTracker.update(System.nanoTime() / 1_000_000, status, live)
+        // T35: keep recent hits so a tap places the point the user aimed at, not the hit after the phone shook.
+        val nowMs = System.nanoTime() / 1_000_000
+        buffer.record(nowMs, camPos, liveHit.takeIf { it.result.isHit }?.let { Candidate(it, lockedEnd) })
+        val coaching = coachingTracker.update(nowMs, status, live)
 
-        if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) place(liveHit, lockedEnd)
+        if (pendingPlace.getAndSet(false) && coaching == CoachingState.READY) placeFromBuffer(nowMs, liveHit)
         if (pendingDetect.getAndSet(false) && coaching == CoachingState.READY) rect.detect(frame, w / 2f, h / 2f)
         drag.apply(frame, status)
 
@@ -195,6 +202,7 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             room = roomFrame?.ui,
             rect = built.rect,
             detectFailTick = rect.failTick,
+            tooFastTick = tooFastTick,
             save = if (status == TrackingStatus.TRACKING && !angle.active) SaveCandidate.of(rect.active, finished, built.placed, built.rect, pts, boxFrame?.ui, roomFrame?.ui) else null,
         )
     }
@@ -207,6 +215,16 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
         }
         val p = smoother.update(camPos, r.position, r.source) ?: return snap.hit
         return snap.hit.withPosition(p)
+    }
+
+    /** Places from the pre-tap hit; falls back to the live hit only when the phone is steady, else drops the tap. */
+    private fun placeFromBuffer(nowMs: Long, liveHit: ArHit) {
+        val pick = buffer.pick(nowMs)
+        when {
+            pick != null -> place(pick.value.hit, pick.value.aligned)
+            buffer.isSteady() -> place(liveHit, lockedEnd)
+            else -> tooFastTick++
+        }
     }
 
     private fun place(hit: ArHit, aligned: Vec3? = null) {
@@ -235,3 +253,6 @@ class MeasureController(private val view: ArCameraView, private val manager: ArS
             (ctx.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
     }
 }
+
+/** One buffered frame's placement candidate: the hit plus its level/plumb-aligned end (if aligned). */
+private data class Candidate(val hit: ArHit, val aligned: Vec3?)

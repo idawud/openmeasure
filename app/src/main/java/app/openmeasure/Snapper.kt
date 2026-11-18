@@ -7,6 +7,7 @@ import app.openmeasure.ar.SnapService
 import app.openmeasure.measure.snap.SnapHysteresis
 import app.openmeasure.measure.snap.SnapKind
 import com.google.ar.core.Frame
+import kotlin.math.max
 
 /** Edge snapping shared by reticle and drag: settings, hysteresis and the acquire tick used for haptics. */
 internal class Snapper(service: HitTestService, private val view: ArCameraView) {
@@ -44,8 +45,23 @@ internal class Snapper(service: HitTestService, private val view: ArCameraView) 
             hyst.reset()
             return SnapService.Outcome(base, SnapKind.NONE, false, null)
         }
-        val out = snapService.snap(frame, x, y, base, hyst, view.width, view.height, radiusPx)
+        val out = snapService.snap(frame, x, y, base, hyst, view.width, view.height, effectiveRadiusPx(base))
         if (out.acquired) tick++
         return out
+    }
+
+    /**
+     * T35: up close a few view pixels is a large world distance, so the snap cap shrinks with the base hit
+     * distance: radiusPx * max(0.4, distanceM / 0.5) when closer than 0.5 m. Applies to fresh detections only;
+     * a held target still obeys the hysteresis release radius.
+     */
+    private fun effectiveRadiusPx(base: ArHit): Float {
+        val d = base.result.distanceM
+        if (!base.result.isHit || d >= CLOSE_RANGE_M) return radiusPx
+        return radiusPx * max(0.4f, d / CLOSE_RANGE_M)
+    }
+
+    private companion object {
+        const val CLOSE_RANGE_M = 0.5f
     }
 }

@@ -62,6 +62,8 @@ data class MeasureUiState(
     val rect: RectUi? = null,
     /** Increments each time auto-detect finds nothing; the UI shows the manual-corners hint. */
     val detectFailTick: Int = 0,
+    /** Increments when a place request is dropped because the phone was moving too fast ("Hold steady"). */
+    val tooFastTick: Int = 0,
     /** Non-null when a displayable measurement exists that the user may save to history. */
     val save: SaveCandidate? = null,
 )
