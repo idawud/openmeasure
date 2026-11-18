@@ -1,38 +1,15 @@
 # PROGRESS (overwrite this file; keep under 40 lines)
 
-Last updated: 2026-11-11
-Current phase: Phase 2 build-only (owner chose to continue features; T07 GO/NO-GO still pending)
-Last committed task: post-T32 fixes: 16 KB libs (Filament removed, ML Kit pose 18.0.0-beta5), drift fix (world anchors + AnchorPoseFilter + ReticleSmoother), iPhone-style UI redesign (app/ui/). Open: T07, T22. All unverified on device after redesign.
-Everything since T05 is compiled + JVM-tested only, never run on a device.
+Last updated: 2026-11-18
+Current phase: Phase 4 field fixes T33-T36 DONE (committed), all unverified on device. T07 GO/NO-GO and T22 still open.
+Last commits: T33 solid line/no ruler; T34 SurfaceFuser (plane-fused depth hit, near-range falloff); T35 PlacementBuffer (pre-tap hit, speed gate, close-range snap); T36 debug log.
 
 ## Next step
-- ACTIVE (2026-11-18, owner field bugs): Phase 4 T33-T36 in docs/TASKS.md, in order, one commit each. Plan: (T33) solid white line, no ruler ticks/dashes;
-  (T34) surface-fused plane hit (fit plane to bigger depth patch, smooth plane in world space, intersect current ray) + near-range confidence falloff, fixes close-range/moving error;
-  (T35) place from the hit ~120 ms before the tap + reject high camera speed (taps shake the phone; fixes flaky marks); (T36) debug log. No ML model needed.
-- After Phase 4: next unticked in docs/TASKS.md. Phone results (below) gate T07 GO/NO-GO and T22; NO-GO = stop and ask.
-
-## Blockers / decisions needed from the owner
-- No device connected (adb devices empty). Connect Pixel 8 Pro (USB debugging), then `./gradlew installDebug`.
-- MANUAL TESTS (Pixel 8 Pro, Android 17), in priority order:
-  1. T05/T11 camera+measure: feed ok after permission, rotate/split-screen ok, Home+return no crash, ~30 fps;
-     dots/line track surface; labels legible; haptic on B; AR session shared in AppRoot, paused on tab leave:
-     verify Measure<->Level<->Height switching + resume.
-  2. T07 accuracy: 3 known-length objects (A4 29.7 cm, ~1 m ruler, ~2 m door). "+" for A, "+" for B, 5 readings each.
-     `adb logcat -s OpenMeasureSpike` logs "dist=.. cm source=.. conf=..". Send true length, readings, source, oddities.
-  3. T15 level (flat bubble / edge bar, green <0.5 deg, tone+haptic follow toggles). T17-T19 tabs, settings, disclaimer once, TalkBack.
-  4. T16 capture: saved photo upright, no tint, overlay aligned, Share works (API 26-28 save gated).
-  5. T20 emulator: tablet rail, split-screen, foldable posture, rotate mid-measure, cutout.
-  6. T23 snap: table edge at 1 m (~7 mm expected), one haptic per acquire, no snap on flat wall, 24dp radius maybe too small.
-  7. T24 rect: book at 0.5-1.5 m vs tape; flat wall -> hint; one Undo removes 4 corners.
-  8. T25 height: skeleton aligned; stable readout (stableSpreadM may need raising); tape check 2/3/4 m (+-1.5 cm).
-  9. T26 history: save line/rect/height, unit switch re-formats, note edit, delete+Undo, clear all.
-  10. T27 guides: Level/Plumb chip, lock at 2 deg (release 4), placed point exactly level/plumb, chip not overlapping.
-  11. T28 ruler ticks: appear on approach, thin out with distance, upright labels, none when confidence poor, toggle works, metric+imperial.
-  12. T31 angle: A,V,B + arc + label; 90 deg corner ~90.0; arc takes smaller sweep near 180; drag/undo update; mode switch clears.
-  13. T32 export: share CSV into spreadsheet, PDF into viewer (A4, multipage, thumbnails, missing photo ok); item share with/without photo.
-  14. T29 box: W,D,H each <=1 cm on a known carton, all sides, H label placement, v1->v2 upgrade keeps history; not-level flag = spread > max(3 cm, 3%).
-  15. T30 room: known room <=1 cm per 1 m wall; mini plan placement on narrow phones; plan screen rotate/split; SVG/PDF open in share targets; TalkBack summary.
-  16. CONFIRMED on Pixel 8 Pro 2026-11-11: no 16 KB dialog, welcome+permission ok, placed points stay put, new UI ok. Still to check: Height on ML Kit beta, rotation/split-screen, landscape layout.
+- OWNER: install on Pixel 8 Pro (`./gradlew installDebug`) and retest: 1 m item at ~30 cm moving along it (compare iPhone), tap "+" 10x on same spot (flakiness),
+  line is solid white. Send `adb logcat -s OpenMeasureMeasure OpenMeasureDrift` + true length if error persists.
+- If still wrong: tune SurfaceFuser (alpha 0.3, gates), PlacementBuffer (lookback 120 ms, max 0.25 m/s), then consider [opus] architect. No ML model unless fusion fails.
+- Known gaps: no "Hold steady" UI for refused taps (MeasureUiState.tooFastTick unused); held snaps ignore close-range radius cap.
+- Then: next unticked in docs/TASKS.md; old manual-test list is in git history (commit e270e45).
 
 ## Notes that a new session must know
 - Reference device: Pixel 8 Pro, Android 17. SDK via gitignored local.properties (C:/Users/idawud/AppData/Local/Android/Sdk).
@@ -41,4 +18,3 @@ Everything since T05 is compiled + JVM-tested only, never run on a device.
   Room 2.8.5 + KSP 2.3.13 (data); kotlinx-coroutines-android 1.10.2 (StateFlow). No other deps.
 - Hit-test/confidence tunables are guesses (PLANE_HIGH_MIN_CONFIDENCE 0.9, snap thresholds): tune after T07/T22.
 - Crash logs local-only (filesDir/crashes), gated by analytics opt-out. Lint leftovers in docs/RELEASE_CHECKLIST.md.
-- Close-range accuracy reports: `adb logcat -s OpenMeasureMeasure OpenMeasureDrift` (debug builds only).
