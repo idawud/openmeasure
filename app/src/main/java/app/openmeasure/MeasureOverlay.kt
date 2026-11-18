@@ -111,10 +111,11 @@ fun MeasureOverlay(controller: MeasureController, settingsRepository: SettingsRe
                     if (settings.hapticsEnabled) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                 },
             ) { drawMeasureScene(s, ready, reticleColor, pulse) }
-            if (s.segments.isNotEmpty()) {
+            val labelled = s.segments.filter { !it.live } // owner: no label on the live (reticle) segment, only on placed items
+            if (labelled.isNotEmpty()) {
                 // Last placed dot anchors a label when its segment is off screen (e.g. no hit yet).
                 val fallback = s.dots.lastOrNull { it != null } ?: app.openmeasure.measure.projection.ScreenPoint(0f, 0f)
-                MeasureLabelsLayer(s.segments, fallback, units, onLabelClick = openDetail)
+                MeasureLabelsLayer(labelled, fallback, units, onLabelClick = openDetail)
             }
             s.angle?.let { AngleLabelView(it, onClick = openDetail) }
             s.rect?.let { RectAreaLabel(it, units, onClick = openDetail) }
