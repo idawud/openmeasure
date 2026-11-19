@@ -1,15 +1,25 @@
 package app.openmeasure.measure.units
 
-/** Display unit system for lengths. Pure Kotlin, no Android types. */
-enum class UnitSystem {
-    METRIC,
-    IMPERIAL;
+/**
+ * Display unit for lengths. Pure Kotlin, no Android types.
+ *
+ * METRIC and IMPERIAL are the automatic choices (cm/m, ft+in). The others pin one unit.
+ * Persisted by enum name, so METRIC and IMPERIAL keep their existing stored values.
+ */
+enum class UnitSystem(val isMetric: Boolean) {
+    METRIC(isMetric = true),
+    IMPERIAL(isMetric = false),
+    MILLIMETERS(isMetric = true),
+    CENTIMETERS(isMetric = true),
+    METERS(isMetric = true),
+    INCHES(isMetric = false),
+    FEET(isMetric = false);
 
-    /** The other unit system. */
-    fun toggled(): UnitSystem = when (this) {
-        METRIC -> IMPERIAL
-        IMPERIAL -> METRIC
-    }
+    /** The automatic system this unit belongs to: METRIC or IMPERIAL. Drives area, volume and spoken forms. */
+    val family: UnitSystem get() = if (isMetric) METRIC else IMPERIAL
+
+    /** The other unit family: metric-family -> IMPERIAL, imperial-family -> METRIC. */
+    fun toggled(): UnitSystem = if (isMetric) IMPERIAL else METRIC
 }
 
 private val IMPERIAL_REGIONS = setOf("US", "LR", "MM")

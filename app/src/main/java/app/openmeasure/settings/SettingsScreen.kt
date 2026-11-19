@@ -32,6 +32,22 @@ import app.openmeasure.measure.units.UnitSystem
 import app.openmeasure.ui.OmColors
 import app.openmeasure.ui.ScreenScaffold
 
+/** Unit choices in picker order: automatic families first, then the fixed units. */
+private val UNIT_CHOICES = listOf(
+    UnitSystem.METRIC, UnitSystem.MILLIMETERS, UnitSystem.CENTIMETERS, UnitSystem.METERS,
+    UnitSystem.IMPERIAL, UnitSystem.INCHES, UnitSystem.FEET,
+)
+
+private fun unitLabelRes(unit: UnitSystem): Int = when (unit) {
+    UnitSystem.METRIC -> R.string.unit_auto_metric
+    UnitSystem.MILLIMETERS -> R.string.unit_millimetres
+    UnitSystem.CENTIMETERS -> R.string.unit_centimetres
+    UnitSystem.METERS -> R.string.unit_metres
+    UnitSystem.IMPERIAL -> R.string.unit_auto_imperial
+    UnitSystem.INCHES -> R.string.unit_inches
+    UnitSystem.FEET -> R.string.unit_feet
+}
+
 /** Full-screen settings page. Back navigation is handled by the caller via [onBack]. */
 @Composable
 fun SettingsScreen(repository: SettingsRepository, onBack: () -> Unit) {
@@ -41,17 +57,14 @@ fun SettingsScreen(repository: SettingsRepository, onBack: () -> Unit) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
             SectionHeader(stringResource(R.string.settings_units))
             SettingsGroup {
-                RadioRow(
-                    label = stringResource(R.string.units_metric),
-                    selected = settings.unitSystem == UnitSystem.METRIC,
-                    onSelect = { repository.setUnitSystem(UnitSystem.METRIC) },
-                )
-                RowDivider()
-                RadioRow(
-                    label = stringResource(R.string.units_imperial),
-                    selected = settings.unitSystem == UnitSystem.IMPERIAL,
-                    onSelect = { repository.setUnitSystem(UnitSystem.IMPERIAL) },
-                )
+                UNIT_CHOICES.forEachIndexed { i, unit ->
+                    if (i > 0) RowDivider()
+                    RadioRow(
+                        label = stringResource(unitLabelRes(unit)),
+                        selected = settings.unitSystem == unit,
+                        onSelect = { repository.setUnitSystem(unit) },
+                    )
+                }
             }
 
             SectionHeader(stringResource(R.string.settings_measuring))

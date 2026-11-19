@@ -66,6 +66,53 @@ class LengthFormatterTest {
         assertEquals("11.5 in", LengthFormatter.format(inchesToMeters(11.5), imperial))
     }
 
+    // --- Fixed units ---
+
+    @Test
+    fun millimetres_wholeMillimetres_evenAboveOneMetre() {
+        assertEquals("1203 mm", LengthFormatter.format(1.203, UnitSystem.MILLIMETERS))
+        assertEquals("0 mm", LengthFormatter.format(0.0, UnitSystem.MILLIMETERS))
+        assertEquals("0 mm", LengthFormatter.format(0.0004, UnitSystem.MILLIMETERS))
+        assertEquals("1 mm", LengthFormatter.format(0.0005, UnitSystem.MILLIMETERS))
+    }
+
+    @Test
+    fun centimetres_wholeCentimetres_evenAboveOneMetre() {
+        assertEquals("120 cm", LengthFormatter.format(1.2, UnitSystem.CENTIMETERS))
+        assertEquals("84 cm", LengthFormatter.format(0.84, UnitSystem.CENTIMETERS))
+        assertEquals("50 cm", LengthFormatter.format(0.495, UnitSystem.CENTIMETERS))
+    }
+
+    @Test
+    fun metres_twoDecimals_evenBelowOneMetre() {
+        assertEquals("1.20 m", LengthFormatter.format(1.2, UnitSystem.METERS))
+        assertEquals("0.40 m", LengthFormatter.format(0.4, UnitSystem.METERS))
+        assertEquals("0.00 m", LengthFormatter.format(0.0, UnitSystem.METERS))
+    }
+
+    @Test
+    fun inches_halfInchSteps_evenAboveTwelveInches() {
+        assertEquals("47.5 in", LengthFormatter.format(inchesToMeters(47.5), UnitSystem.INCHES))
+        assertEquals("7 in", LengthFormatter.format(inchesToMeters(7.0), UnitSystem.INCHES))
+        assertEquals("0.5 in", LengthFormatter.format(inchesToMeters(0.25), UnitSystem.INCHES))
+    }
+
+    @Test
+    fun feet_twoDecimals() {
+        assertEquals("3.94 ft", LengthFormatter.format(1.2, UnitSystem.FEET))
+        assertEquals("0.33 ft", LengthFormatter.format(0.1, UnitSystem.FEET))
+        assertEquals("1.00 ft", LengthFormatter.format(0.3048, UnitSystem.FEET))
+    }
+
+    @Test
+    fun fixedUnits_invalidInput_rendersDash() {
+        val dash = "—"
+        for (u in listOf(UnitSystem.MILLIMETERS, UnitSystem.CENTIMETERS, UnitSystem.METERS, UnitSystem.INCHES, UnitSystem.FEET)) {
+            assertEquals(dash, LengthFormatter.format(Double.NaN, u))
+            assertEquals(dash, LengthFormatter.format(-0.01, u))
+        }
+    }
+
     // --- Invalid input ---
 
     @Test

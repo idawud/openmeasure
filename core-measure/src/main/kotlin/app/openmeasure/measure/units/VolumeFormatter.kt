@@ -33,7 +33,7 @@ object VolumeFormatter {
     fun speak(cubicMeters: Double, system: UnitSystem): String? {
         val p = parts(cubicMeters, system) ?: return null
         val main = amount(trim(p.amount), p.singular, p.plural)
-        if (system != UnitSystem.METRIC || p.symbol != "m³") return main
+        if (!system.isMetric || p.symbol != "m³") return main
         val l = litreAmount(cubicMeters) ?: return main
         return "$main, ${amount(trim(l), "litre", "litres")}"
     }
@@ -43,13 +43,13 @@ object VolumeFormatter {
     private fun parts(cubicMeters: Double, system: UnitSystem): Parts? {
         if (!cubicMeters.isFinite() || cubicMeters < 0.0) return null
         val m3 = BigDecimal.valueOf(cubicMeters)
-        return when (system) {
-            UnitSystem.METRIC -> {
+        return when (system.isMetric) {
+            true -> {
                 val cm3 = m3.multiply(CM3_PER_M3).setScale(0, RoundingMode.HALF_UP)
                 if (cm3 < THOUSAND) Parts(cm3.toPlainString(), "cm³", "cubic centimetre", "cubic centimetres")
                 else Parts(m3.setScale(3, RoundingMode.HALF_UP).toPlainString(), "m³", "cubic metre", "cubic metres")
             }
-            UnitSystem.IMPERIAL -> {
+            false -> {
                 val in3 = m3.divide(BigDecimal(CUBIC_M_PER_CUBIC_IN), MathContext.DECIMAL64)
                 val in3Rounded = in3.setScale(0, RoundingMode.HALF_UP)
                 if (in3Rounded < IN3_PER_FT3) Parts(in3Rounded.toPlainString(), "in³", "cubic inch", "cubic inches")

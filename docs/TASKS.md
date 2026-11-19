@@ -54,3 +54,4 @@ Tick with `- [x]` when committed. Do not reorder without noting it in PROGRESS.m
 - [x] T35 [haiku] Steadier point placement: ring buffer of recent live hits in MeasureController; `place()` uses the hit from ~120 ms before the tap (button press shakes the phone), skipping frames whose camera speed is high; refuse placement while speed > threshold (coaching MOVE_SLOWLY). Tighten snap radius in metres at close range. Tests for the buffer logic in core-measure (`PlacementBuffer`).
 - [x] T36 [haiku] Debug-only measurement log (tag OpenMeasureMeasure: source, depth m, conf, tracking, camera speed per placed point) so owner can send logcat if close-range error persists.
 - [x] T37 [haiku] Remove guide lines (dashed noise + hidden lock).
+- [x] T38 [haiku] Selectable length unit (mm/cm/m/in/ft + auto)

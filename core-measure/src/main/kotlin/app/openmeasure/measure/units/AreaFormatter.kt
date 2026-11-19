@@ -36,13 +36,13 @@ object AreaFormatter {
     private fun parts(squareMeters: Double, system: UnitSystem): Parts? {
         if (!squareMeters.isFinite() || squareMeters < 0.0) return null
         val m2 = BigDecimal.valueOf(squareMeters)
-        return when (system) {
-            UnitSystem.METRIC -> {
+        return when (system.isMetric) {
+            true -> {
                 val cm2 = m2.multiply(CM2_PER_M2).setScale(0, RoundingMode.HALF_UP)
                 if (cm2 < CM2_PER_M2) Parts(cm2.toPlainString(), "cm²", "square centimetre", "square centimetres")
                 else Parts(m2.setScale(2, RoundingMode.HALF_UP).toPlainString(), "m²", "square metre", "square metres")
             }
-            UnitSystem.IMPERIAL -> {
+            false -> {
                 val in2 = m2.divide(BigDecimal(SQ_M_PER_SQ_IN), MathContext.DECIMAL64)
                 val in2Rounded = in2.setScale(0, RoundingMode.HALF_UP)
                 if (in2Rounded < IN2_PER_FT2) Parts(in2Rounded.toPlainString(), "in²", "square inch", "square inches")

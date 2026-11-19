@@ -57,7 +57,7 @@ fun BoxVolumeLabel(box: BoxUi, units: UnitSystem, modifier: Modifier = Modifier,
     }
     val notLevel = stringResource(R.string.box_base_not_level)
     val main = VolumeFormatter.format(volume.cubicMeters, units)
-    val litres = volume.takeIf { units == UnitSystem.METRIC && it.cubicMeters >= LITRE_M3 }?.let { VolumeFormatter.litres(it.cubicMeters) }
+    val litres = volume.takeIf { units.isMetric && it.cubicMeters >= LITRE_M3 }?.let { VolumeFormatter.litres(it.cubicMeters) }
     val description = stringResource(
         R.string.spoken_volume_confidence, BoxLabel.speak(volume.cubicMeters, units) ?: main, confidenceText(volume.level),
     ) + if (volume.baseNotLevel) ". $notLevel" else ""

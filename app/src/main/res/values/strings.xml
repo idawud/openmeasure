@@ -72,8 +72,13 @@
 
     <string name="settings_title">Settings</string>
     <string name="settings_units">Units</string>
-    <string name="units_metric">Metric</string>
-    <string name="units_imperial">Imperial</string>
+    <string name="unit_auto_metric">Auto metric (cm / m)</string>
+    <string name="unit_millimetres">Millimetres (mm)</string>
+    <string name="unit_centimetres">Centimetres (cm)</string>
+    <string name="unit_metres">Metres (m)</string>
+    <string name="unit_auto_imperial">Auto imperial (ft / in)</string>
+    <string name="unit_inches">Inches (in)</string>
+    <string name="unit_feet">Feet (ft)</string>
     <string name="settings_measuring">Measuring</string>
     <string name="settings_snap">Snap to edges</string>
     <string name="settings_snap_desc">Pull points onto nearby edges and corners</string>

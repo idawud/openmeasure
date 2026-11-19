@@ -29,7 +29,7 @@ object RulerTicks {
         if (!lengthMeters.isFinite() || lengthMeters <= 0.0) return emptyList()
         if (!pixelsPerMeter.isFinite() || pixelsPerMeter <= 0.0) return emptyList()
         if (lengthMeters * pixelsPerMeter < MIN_SEGMENT_PX) return emptyList()
-        val sc = if (unitSystem == UnitSystem.METRIC) METRIC else IMPERIAL
+        val sc = if (unitSystem.isMetric) METRIC else IMPERIAL
         val pxPerUnit = pixelsPerMeter * sc.unitMeters
         val step = sc.steps.firstOrNull { it * pxPerUnit >= MIN_TICK_PX } ?: return emptyList()
         val major = if (step < sc.majors[0]) sc.majors[0] else sc.majors[1]

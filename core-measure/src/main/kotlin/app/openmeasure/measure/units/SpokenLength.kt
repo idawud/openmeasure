@@ -18,9 +18,9 @@ object SpokenLength {
 
     fun speak(meters: Double, system: UnitSystem): String? {
         if (!meters.isFinite() || meters < 0.0) return null
-        return when (system) {
-            UnitSystem.METRIC -> metric(meters)
-            UnitSystem.IMPERIAL -> imperial(meters)
+        return when (system.isMetric) {
+            true -> metric(meters)
+            false -> imperial(meters)
         }
     }
 
